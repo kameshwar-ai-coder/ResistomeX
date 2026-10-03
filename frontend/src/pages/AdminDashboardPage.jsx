@@ -1,10 +1,90 @@
-import React from 'react';
-import { MOCK_ADMIN_SURVEILLANCE } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 
 export const AdminDashboardPage = () => {
-  const data = MOCK_ADMIN_SURVEILLANCE;
+  const [data, setData] = useState({
+    totalInpatients: 0,
+    hospitalAmrRate: "0.0%",
+    stewardshipCompliance: "0.0%",
+    highRiskPatientsCount: 0,
+    wardBreakdown: [],
+    pathogenPrevalence: [],
+    monthlyResistanceTrend: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const pieColors = ['#ba1a1a', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'];
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setError('Database is unconfigured. Set VITE_SUPABASE_URL in frontend/.env.local.');
+      setLoading(false);
+      return;
+    }
+
+    async function fetchSurveillance() {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data: dbWards, error: dbErr } = await supabase.from('ward_surveillance').select('*');
+        if (dbErr) throw dbErr;
+
+        if (dbWards && dbWards.length > 0) {
+          const totalInpatients = dbWards.reduce((acc, w) => acc + w.total_inpatients, 0);
+          const highRiskCount = dbWards.reduce((acc, w) => acc + w.high_risk_count, 0);
+          const avgAmrRate = (dbWards.reduce((acc, w) => acc + Number(w.amr_rate_percent), 0) / dbWards.length).toFixed(1);
+          const avgCompliance = (dbWards.reduce((acc, w) => acc + Number(w.stewardship_compliance_percent), 0) / dbWards.length).toFixed(1);
+
+          setData({
+            totalInpatients,
+            hospitalAmrRate: `${avgAmrRate}%`,
+            stewardshipCompliance: `${avgCompliance}%`,
+            highRiskPatientsCount: highRiskCount,
+            wardBreakdown: dbWards.map(w => ({
+              ward: w.ward_name,
+              total: w.total_inpatients,
+              highRisk: w.high_risk_count,
+              amrRate: `${w.amr_rate_percent}%`,
+              compliance: `${w.stewardship_compliance_percent}%`
+            })),
+            pathogenPrevalence: [],
+            monthlyResistanceTrend: []
+          });
+        }
+      } catch (err) {
+        console.error('Admin surveillance fetch error:', err.message);
+        setError('Unable to load hospital surveillance data from database.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSurveillance();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading hospital AMR surveillance overview...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load surveillance data.</p>
+          <p className="text-xs text-red-700">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full space-y-6">
@@ -21,7 +101,7 @@ export const AdminDashboardPage = () => {
         </div>
 
         <span className="px-3 py-1 bg-[#e8e8ec] text-[#111124] text-xs font-bold rounded-full self-start sm:self-auto">
-          Director: Dr. Elena Rostova
+          AMR Surveillance Panel
         </span>
       </div>
 
@@ -31,7 +111,7 @@ export const AdminDashboardPage = () => {
           <div>
             <p className="text-[11px] font-bold text-[#5a5b82] uppercase tracking-wider">Total Inpatients</p>
             <p className="text-2xl font-bold text-[#111124] mt-1">{data.totalInpatients}</p>
-            <p className="text-xs text-[#5a5b82] mt-1">Across 4 hospital wings</p>
+            <p className="text-xs text-[#5a5b82] mt-1">Active hospital census</p>
           </div>
           <div className="w-10 h-10 rounded bg-[#f3f3f7] text-[#111124] flex items-center justify-center">
             <span className="material-symbols-outlined text-[22px]">group</span>
@@ -42,7 +122,7 @@ export const AdminDashboardPage = () => {
           <div>
             <p className="text-[11px] font-bold text-[#ba1a1a] uppercase tracking-wider">Hospital AMR Rate</p>
             <p className="text-2xl font-bold text-[#ba1a1a] mt-1">{data.hospitalAmrRate}</p>
-            <p className="text-xs text-[#ba1a1a] mt-1">+1.4% vs last month</p>
+            <p className="text-xs text-[#ba1a1a] mt-1">Prevalence metrics</p>
           </div>
           <div className="w-10 h-10 rounded bg-[#ffdad6]/40 text-[#ba1a1a] flex items-center justify-center">
             <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
@@ -64,7 +144,7 @@ export const AdminDashboardPage = () => {
           <div>
             <p className="text-[11px] font-bold text-[#5a5b82] uppercase tracking-wider">High Risk Inpatients</p>
             <p className="text-2xl font-bold text-[#111124] mt-1">{data.highRiskPatientsCount}</p>
-            <p className="text-xs text-[#5a5b82] mt-1">8 ICU · 4 Surgical</p>
+            <p className="text-xs text-[#5a5b82] mt-1">Surveillance active</p>
           </div>
           <div className="w-10 h-10 rounded bg-[#f3f3f7] text-[#111124] flex items-center justify-center">
             <span className="material-symbols-outlined text-[22px]">domain</span>
@@ -79,70 +159,76 @@ export const AdminDashboardPage = () => {
         </h2>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#f3f3f7] border-b border-[#ededf1] text-[#5a5b82] font-bold uppercase text-[10px]">
-              <tr>
-                <th className="px-4 py-3">Ward Name</th>
-                <th className="px-4 py-3">Total Inpatients</th>
-                <th className="px-4 py-3">High AMR Risk Cases</th>
-                <th className="px-4 py-3">Ward Endemic AMR Rate</th>
-                <th className="px-4 py-3">Stewardship Compliance</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#ededf1]">
-              {data.wardBreakdown.map((w, idx) => (
-                <tr key={idx} className="hover:bg-[#f3f3f7]/50 transition-colors">
-                  <td className="px-4 py-3 font-bold text-[#111124]">{w.ward}</td>
-                  <td className="px-4 py-3 font-semibold">{w.total}</td>
-                  <td className="px-4 py-3 text-[#ba1a1a] font-bold">{w.highRisk}</td>
-                  <td className="px-4 py-3 font-mono font-bold text-[#111124]">{w.amrRate}</td>
-                  <td className="px-4 py-3 text-emerald-800 font-bold">{w.compliance}</td>
+          {data.wardBreakdown.length > 0 ? (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#f3f3f7] border-b border-[#ededf1] text-[#5a5b82] font-bold uppercase text-[10px]">
+                <tr>
+                  <th className="px-4 py-3">Ward Name</th>
+                  <th className="px-4 py-3">Total Inpatients</th>
+                  <th className="px-4 py-3">High AMR Risk Cases</th>
+                  <th className="px-4 py-3">Ward Endemic AMR Rate</th>
+                  <th className="px-4 py-3">Stewardship Compliance</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#ededf1]">
+                {data.wardBreakdown.map((w, idx) => (
+                  <tr key={idx} className="hover:bg-[#f3f3f7]/50 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#111124]">{w.ward}</td>
+                    <td className="px-4 py-3 font-semibold">{w.total}</td>
+                    <td className="px-4 py-3 text-[#ba1a1a] font-bold">{w.highRisk}</td>
+                    <td className="px-4 py-3 font-mono font-bold text-[#111124]">{w.amrRate}</td>
+                    <td className="px-4 py-3 text-emerald-800 font-bold">{w.compliance}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-gray-500 text-center py-6 text-xs">No ward surveillance records available in database.</p>
+          )}
         </div>
       </div>
 
       {/* Monthly Trends & Pathogen Prevalence Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-[#ededf1] shadow-xs p-5 space-y-3">
-          <h3 className="text-xs font-bold text-[#5a5b82] uppercase tracking-wider">
-            Monthly Resistance Pathogen Trend
-          </h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.monthlyResistanceTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
-                <Bar dataKey="esbl" fill="#ba1a1a" name="ESBL (%)" />
-                <Bar dataKey="mrsa" fill="#f59e0b" name="MRSA (%)" />
-                <Bar dataKey="cre" fill="#8b5cf6" name="CRE (%)" />
-              </BarChart>
-            </ResponsiveContainer>
+      {data.monthlyResistanceTrend.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl border border-[#ededf1] shadow-xs p-5 space-y-3">
+            <h3 className="text-xs font-bold text-[#5a5b82] uppercase tracking-wider">
+              Monthly Resistance Pathogen Trend
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.monthlyResistanceTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
+                  <Bar dataKey="esbl" fill="#ba1a1a" name="ESBL (%)" />
+                  <Bar dataKey="mrsa" fill="#f59e0b" name="MRSA (%)" />
+                  <Bar dataKey="cre" fill="#8b5cf6" name="CRE (%)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-xl border border-[#ededf1] shadow-xs p-5 space-y-3">
-          <h3 className="text-xs font-bold text-[#5a5b82] uppercase tracking-wider">
-            Pathogen Prevalence Breakdown
-          </h3>
-          <div className="h-64 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={data.pathogenPrevalence} dataKey="percentage" nameKey="pathogen" cx="50%" cy="50%" outerRadius={80} label>
-                  {data.pathogenPrevalence.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="bg-white rounded-xl border border-[#ededf1] shadow-xs p-5 space-y-3">
+            <h3 className="text-xs font-bold text-[#5a5b82] uppercase tracking-wider">
+              Pathogen Prevalence Breakdown
+            </h3>
+            <div className="h-64 w-full flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={data.pathogenPrevalence} dataKey="percentage" nameKey="pathogen" cx="50%" cy="50%" outerRadius={80} label>
+                    {data.pathogenPrevalence.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

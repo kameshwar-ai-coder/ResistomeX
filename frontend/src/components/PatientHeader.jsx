@@ -18,17 +18,41 @@ import {
 
 export const PatientHeader = () => {
   const { id } = useParams();
-  const { getPatientById } = usePatients();
-  const patient = getPatientById(id || 'P-72309');
+  const { getPatientById, loading } = usePatients();
+  const patient = getPatientById(id);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-[#dcdcec] p-4 mb-6 text-xs text-[#5a5b82] flex items-center justify-center gap-2">
+        <span className="material-symbols-outlined text-xl animate-spin">sync</span>
+        <span>Loading patient profile...</span>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="bg-white rounded-xl border border-[#dcdcec] p-4 mb-6 text-xs text-[#5a5b82] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <NavLink to="/doctor/patients" className="p-1.5 rounded bg-[#F7F7FB] hover:bg-[#EDEDF4] text-[#26263A]">
+            <ArrowLeft className="w-4 h-4" />
+          </NavLink>
+          <span>Patient record not found for ID: <strong>{id}</strong></span>
+        </div>
+      </div>
+    );
+  }
+
+  const patientIdToUse = patient.id;
 
   const navTabs = [
-    { label: 'Clinical Info', path: `/doctor/patient/${patient.id}/clinical`, icon: FileText },
-    { label: 'AMR Risk Engine', path: `/doctor/patient/${patient.id}/amr-risk`, icon: Dna },
-    { label: 'Why This Prediction?', path: `/doctor/patient/${patient.id}/explainability`, icon: HelpCircle },
-    { label: 'Treatment Support', path: `/doctor/patient/${patient.id}/treatment-support`, icon: Pill },
-    { label: 'Doctor Decision', path: `/doctor/patient/${patient.id}/decision`, icon: CheckCircle },
-    { label: 'Patient Monitoring', path: `/doctor/patient/${patient.id}/monitoring`, icon: Activity },
-    { label: 'Culture & Sensitivity', path: `/doctor/patient/${patient.id}/culture`, icon: FlaskConical },
+    { label: 'Clinical Info', path: `/doctor/patient/${patientIdToUse}/clinical`, icon: FileText },
+    { label: 'AMR Risk Engine', path: `/doctor/patient/${patientIdToUse}/amr-risk`, icon: Dna },
+    { label: 'Why This Prediction?', path: `/doctor/patient/${patientIdToUse}/explainability`, icon: HelpCircle },
+    { label: 'Treatment Support', path: `/doctor/patient/${patientIdToUse}/treatment-support`, icon: Pill },
+    { label: 'Doctor Decision', path: `/doctor/patient/${patientIdToUse}/decision`, icon: CheckCircle },
+    { label: 'Patient Monitoring', path: `/doctor/patient/${patientIdToUse}/monitoring`, icon: Activity },
+    { label: 'Culture & Sensitivity', path: `/doctor/patient/${patientIdToUse}/culture`, icon: FlaskConical },
   ];
 
   const getRiskBadge = (level, score) => {

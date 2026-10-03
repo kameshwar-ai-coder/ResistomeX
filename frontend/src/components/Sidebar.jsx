@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export const Sidebar = () => {
-  const { role } = useAuth();
+  const { role, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,7 +29,13 @@ export const Sidebar = () => {
     { name: 'User Management', path: '/admin/users', icon: 'manage_accounts' }
   ];
 
-  const navItems = role === 'doctor' ? doctorNav : role === 'nurse' ? nurseNav : adminNav;
+  const currentRole = role || 'doctor';
+  const navItems = currentRole === 'doctor' ? doctorNav : currentRole === 'nurse' ? nurseNav : adminNav;
+
+  const handleSignOut = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-[#f3f3f7] z-50 flex flex-col justify-between border-r border-[#ededf1]">
@@ -47,9 +53,9 @@ export const Sidebar = () => {
 
         {/* Workspace Indicator */}
         <div className="px-4 py-2 bg-[#e8e8ec]/50 border-b border-[#ededf1] flex items-center justify-between text-xs">
-          <span className="text-[#5a5b82] font-medium text-[11px]">Role View</span>
+          <span className="text-[#5a5b82] font-medium text-[11px]">Database Role</span>
           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#111124] text-white">
-            {role}
+            {currentRole}
           </span>
         </div>
 
@@ -89,7 +95,7 @@ export const Sidebar = () => {
         </div>
 
         <button
-          onClick={() => navigate('/login')}
+          onClick={handleSignOut}
           className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded bg-white hover:bg-[#ededf1] border border-[#ededf1] text-[#ba1a1a] text-xs font-bold transition-colors"
         >
           <span className="material-symbols-outlined text-[16px]">logout</span>

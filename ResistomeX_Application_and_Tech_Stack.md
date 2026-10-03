@@ -138,19 +138,15 @@ Collected outcomes can be used to evaluate and improve the system after proper v
 
 # 11. Technology Stack
 
-| Layer | Technology | Purpose |
+| Layer | Technology | Status & Scope |
 |---|---|---|
-| Frontend | **React.js** | Build doctor, nurse, and admin interfaces |
-| Styling | **Tailwind CSS** | Responsive and consistent UI |
-| Backend | **Python + FastAPI** | REST APIs and application logic |
-| ML | **XGBoost** | AMR risk prediction |
-| Explainability | **SHAP** | Explain model predictions |
-| Data Processing | **Pandas + NumPy** | Data cleaning and feature preparation |
-| Database | **PostgreSQL** | Store application and clinical workflow data |
-| Authentication | **JWT** | Login and role-based access |
-| API | **REST API** | React ↔ FastAPI communication |
-| Version Control | **Git + GitHub** | Source-code management |
-| Deployment | **Docker** | Consistent application deployment |
+| **Frontend Framework** | **React 19 + Vite** | ✅ **Completed** (Doctor, Nurse, Admin interfaces) |
+| **Styling & Icons** | **Tailwind CSS v4 + Material Symbols** | ✅ **Completed** (Responsive dark/light glassmorphic UI) |
+| **Database & Auth** | **Supabase / PostgreSQL** | ✅ **Completed** (9 Tables, RLS, Auth, RBAC Profile triggers) |
+| **State & API Client** | **React Context + `api.js`** | ✅ **Completed** (100% database-backed clinical data persistence) |
+| **Backend AI Service** | **Python + FastAPI** | 🟡 **Future FRD Scope** (Handed over to FRD team) |
+| **ML Engine** | **XGBoost** | 🟡 **Future FRD Scope** (Handed over to FRD team) |
+| **Explainability** | **SHAP** | 🟡 **Future FRD Scope** (Handed over to FRD team) |
 
 ## 12. Technical Architecture
 

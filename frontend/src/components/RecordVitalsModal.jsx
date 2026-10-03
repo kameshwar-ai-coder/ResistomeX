@@ -4,6 +4,9 @@ import { X, HeartPulse, Check } from 'lucide-react';
 
 export const RecordVitalsModal = ({ isOpen, onClose, patient }) => {
   const { updateVitals } = usePatients();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  
   const [vitals, setVitals] = useState({
     temp: patient?.vitals?.temp || '38.0 °C',
     hr: patient?.vitals?.hr || '90 bpm',
@@ -15,10 +18,19 @@ export const RecordVitalsModal = ({ isOpen, onClose, patient }) => {
 
   if (!isOpen || !patient) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    updateVitals(patient.id, vitals);
-    onClose();
+    setErrorMsg('');
+    try {
+      setIsSubmitting(true);
+      await updateVitals(patient.id, vitals);
+      onClose();
+    } catch (err) {
+      console.error('[RecordVitalsModal] Failed to record vitals:', err.message);
+      setErrorMsg(err.message || 'Failed to persist vitals to database.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -98,20 +110,37 @@ export const RecordVitalsModal = ({ isOpen, onClose, patient }) => {
             </div>
           </div>
 
+          {errorMsg && (
+            <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 font-medium">
+              {errorMsg}
+            </div>
+          )}
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#dcdcec]">
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm flex items-center gap-1"
+              disabled={isSubmitting}
+              className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm flex items-center gap-1 disabled:opacity-50"
             >
-              <Check className="w-3.5 h-3.5" />
-              Save Vitals Record
+              {isSubmitting ? (
+                <>
+                  <span className="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save Vitals Record</span>
+                </>
+              )}
             </button>
           </div>
         </form>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Dna, 
@@ -8,35 +8,68 @@ import {
   HeartPulse, 
   ShieldAlert, 
   ArrowRight,
-  ShieldCheck,
   Building2
 } from 'lucide-react';
 
 export const LoginPage = () => {
-  const { switchRole } = useAuth();
+  const { directLogin } = useAuth();
   const navigate = useNavigate();
+
   const [selectedRole, setSelectedRole] = useState('doctor');
-  const [email, setEmail] = useState('m.vance@hospital.org');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('doctor@resistomex.org');
+  const [password, setPassword] = useState('DoctorSecret@123');
   const [facility, setFacility] = useState('Central Academic Medical Center');
 
+  const rolePresets = {
+    doctor: { email: 'doctor@resistomex.org', pass: 'DoctorSecret@123' },
+    nurse: { email: 'nurse@resistomex.org', pass: 'NurseSecret@123' },
+    admin: { email: 'admin@resistomex.org', pass: 'AdminSecret@123' }
+  };
+
+  const handleRoleSelect = (roleName) => {
+    setSelectedRole(roleName);
+    if (rolePresets[roleName]) {
+      setEmail(rolePresets[roleName].email);
+      setPassword(rolePresets[roleName].pass);
+    }
+  };
+
+  const handleEmailChange = (val) => {
+    setEmail(val);
+    const lower = val.toLowerCase();
+    if (lower.includes('nurse')) setSelectedRole('nurse');
+    else if (lower.includes('admin') || lower.includes('stewardship')) setSelectedRole('admin');
+    else if (lower.includes('doctor') || lower.includes('dr')) setSelectedRole('doctor');
+  };
+
   const handleLogin = (e) => {
-    e.preventDefault();
-    switchRole(selectedRole);
-    if (selectedRole === 'doctor') navigate('/doctor/dashboard');
-    else if (selectedRole === 'nurse') navigate('/nurse/dashboard');
+    if (e) e.preventDefault();
+
+    // Infer role from email or selected tab
+    let targetRole = selectedRole;
+    const lowerEmail = email.toLowerCase();
+    if (lowerEmail.includes('nurse')) targetRole = 'nurse';
+    else if (lowerEmail.includes('admin') || lowerEmail.includes('stewardship')) targetRole = 'admin';
+    else if (lowerEmail.includes('doctor') || lowerEmail.includes('dr')) targetRole = 'doctor';
+
+    const { role: authenticatedRole } = directLogin(targetRole, email, { facility, password });
+
+    // Navigate to the respective dashboard
+    if (authenticatedRole === 'doctor') navigate('/doctor/dashboard');
+    else if (authenticatedRole === 'nurse') navigate('/nurse/dashboard');
     else navigate('/admin/dashboard');
   };
 
-  const quickSelect = (roleName) => {
-    setSelectedRole(roleName);
-    if (roleName === 'doctor') {
-      setEmail('m.vance@hospital.org');
-    } else if (roleName === 'nurse') {
-      setEmail('s.jenkins@hospital.org');
-    } else {
-      setEmail('e.rostova@hospital.org');
-    }
+  const handleQuickLogin = (roleName) => {
+    handleRoleSelect(roleName);
+    const presetEmail = rolePresets[roleName]?.email || `${roleName}@resistomex.org`;
+    const presetPass = rolePresets[roleName]?.pass || 'Password123!';
+    
+    const { role: authenticatedRole } = directLogin(roleName, presetEmail, { facility, password: presetPass });
+
+    if (authenticatedRole === 'doctor') navigate('/doctor/dashboard');
+    else if (authenticatedRole === 'nurse') navigate('/nurse/dashboard');
+    else navigate('/admin/dashboard');
   };
 
   return (
@@ -58,8 +91,8 @@ export const LoginPage = () => {
             </p>
           </div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#dcdcec] text-[11px] text-[#26263A] font-medium shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <span>Hospital Clinical CDS System • HIPAA Compliant</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Hospital Clinical CDS System • One-Click Authentication Enabled</span>
           </div>
         </div>
 
@@ -67,20 +100,20 @@ export const LoginPage = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-[#dcdcec] p-6 space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-[#dcdcec]">
             <div>
-              <h2 className="text-base font-bold text-[#26263A]">Clinical Staff Authentication</h2>
-              <p className="text-xs text-[#7A7AA3]">Access AMR surveillance & decision engines</p>
+              <h2 className="text-base font-bold text-[#26263A]">Clinical Staff Sign-In</h2>
+              <p className="text-xs text-[#7A7AA3]">Click any role below to launch dashboard instantly</p>
             </div>
             <Lock className="w-4 h-4 text-[#7A7AA3]" />
           </div>
 
-          {/* Role Selector Pills */}
+          {/* One-Click Role Selector Buttons */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[#7A7AA3]">Select Medical Role</label>
+            <label className="text-xs font-semibold text-[#7A7AA3]">Instant Launch Role</label>
             <div className="grid grid-cols-3 gap-2 p-1.5 rounded-xl bg-[#F7F7FB] border border-[#dcdcec]">
               <button
                 type="button"
-                onClick={() => quickSelect('doctor')}
-                className={`flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all ${
+                onClick={() => handleQuickLogin('doctor')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all cursor-pointer ${
                   selectedRole === 'doctor'
                     ? 'bg-[#26263A] text-white shadow-sm font-semibold'
                     : 'text-[#7A7AA3] hover:text-[#26263A] hover:bg-gray-100'
@@ -93,8 +126,8 @@ export const LoginPage = () => {
 
               <button
                 type="button"
-                onClick={() => quickSelect('nurse')}
-                className={`flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all ${
+                onClick={() => handleQuickLogin('nurse')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all cursor-pointer ${
                   selectedRole === 'nurse'
                     ? 'bg-[#26263A] text-white shadow-sm font-semibold'
                     : 'text-[#7A7AA3] hover:text-[#26263A] hover:bg-gray-100'
@@ -107,8 +140,8 @@ export const LoginPage = () => {
 
               <button
                 type="button"
-                onClick={() => quickSelect('admin')}
-                className={`flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all ${
+                onClick={() => handleQuickLogin('admin')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all cursor-pointer ${
                   selectedRole === 'admin'
                     ? 'bg-[#26263A] text-white shadow-sm font-semibold'
                     : 'text-[#7A7AA3] hover:text-[#26263A] hover:bg-gray-100'
@@ -141,8 +174,8 @@ export const LoginPage = () => {
                 type="email"
                 required
                 value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                onChange={e => handleEmailChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold text-indigo-900 bg-indigo-50/30"
               />
             </div>
 
@@ -153,42 +186,24 @@ export const LoginPage = () => {
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 bg-[#26263A] hover:bg-[#1c1c2b] text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 group"
+              className="w-full py-2.5 px-4 bg-[#26263A] hover:bg-[#1c1c2b] text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 group cursor-pointer"
             >
-              <span>Sign In to {selectedRole.toUpperCase()} Dashboard</span>
+              <span>Launch {selectedRole.toUpperCase()} Dashboard</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
-        </div>
 
-        {/* Demo Preset Cards */}
-        <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3 text-center space-y-1">
-          <p className="text-[11px] font-semibold text-indigo-900">Quick Demo Presets:</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              onClick={() => { quickSelect('doctor'); }}
-              className="text-[10px] bg-white border border-indigo-200 px-2 py-1 rounded text-indigo-800 font-semibold hover:bg-indigo-100"
-            >
-              Dr. Vance (Doctor)
-            </button>
-            <button
-              onClick={() => { quickSelect('nurse'); }}
-              className="text-[10px] bg-white border border-indigo-200 px-2 py-1 rounded text-indigo-800 font-semibold hover:bg-indigo-100"
-            >
-              RN Sarah (Nurse)
-            </button>
-            <button
-              onClick={() => { quickSelect('admin'); }}
-              className="text-[10px] bg-white border border-indigo-200 px-2 py-1 rounded text-indigo-800 font-semibold hover:bg-indigo-100"
-            >
-              Dr. Elena (Admin)
-            </button>
+          <div className="pt-3 border-t border-[#dcdcec] text-center">
+            <span className="text-xs text-gray-600">Need a new staff account? </span>
+            <Link to="/signup" className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+              Create Staff Account
+            </Link>
           </div>
         </div>
       </div>

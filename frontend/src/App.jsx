@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { PatientProvider } from './context/PatientContext';
 
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 
 import { LoginPage } from './pages/LoginPage';
+import { SignUpPage } from './pages/SignUpPage';
 import { DoctorDashboardPage } from './pages/DoctorDashboardPage';
 import { PatientsListPage } from './pages/PatientsListPage';
 import { PatientClinicalInfoPage } from './pages/PatientClinicalInfoPage';
@@ -23,11 +24,67 @@ import { AntibioticUsagePage } from './pages/AntibioticUsagePage';
 import { AIPerformancePage } from './pages/AIPerformancePage';
 import { UserManagementPage } from './pages/UserManagementPage';
 
+// Public Route Guard (Redirects authenticated users to their dashboard)
+const PublicAuthRoute = ({ children }) => {
+  const { isAuthenticated, role, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F7FB]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-semibold text-gray-500">Checking Session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    const currentRole = role || 'doctor';
+    if (currentRole === 'doctor') return <Navigate to="/doctor/dashboard" replace />;
+    if (currentRole === 'nurse') return <Navigate to="/nurse/dashboard" replace />;
+    if (currentRole === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  return children;
+};
+
+// Protected Role-Based Route Guard (Enforces DB role authorization)
+const RoleProtectedRoute = ({ allowedRoles, children }) => {
+  const { isAuthenticated, role, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F7FB]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#26263A] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-bold text-[#26263A]">Verifying Clinical Credentials & RBAC Access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const currentRole = role || 'doctor';
+  if (!allowedRoles.includes(currentRole)) {
+    // Redirect unauthorized user to their own role's home dashboard
+    if (currentRole === 'doctor') return <Navigate to="/doctor/dashboard" replace />;
+    if (currentRole === 'nurse') return <Navigate to="/nurse/dashboard" replace />;
+    if (currentRole === 'admin') return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
 const AppLayout = ({ children }) => {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
 
-  if (isLoginPage) {
+  if (isAuthPage) {
     return <main>{children}</main>;
   }
 
@@ -49,33 +106,34 @@ export function App() {
         <Router>
           <AppLayout>
             <Routes>
-              {/* Default Redirect */}
+              {/* Public Auth Routes */}
               <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<PublicAuthRoute><LoginPage /></PublicAuthRoute>} />
+              <Route path="/signup" element={<PublicAuthRoute><SignUpPage /></PublicAuthRoute>} />
 
-              {/* Doctor Routes */}
-              <Route path="/doctor/dashboard" element={<DoctorDashboardPage />} />
-              <Route path="/doctor/patients" element={<PatientsListPage />} />
-              <Route path="/doctor/patient/:id/clinical" element={<PatientClinicalInfoPage />} />
-              <Route path="/doctor/patient/:id/amr-risk" element={<AMRRiskAssessmentPage />} />
-              <Route path="/doctor/patient/:id/explainability" element={<ExplainabilitySHAPPage />} />
-              <Route path="/doctor/patient/:id/treatment-support" element={<TreatmentSupportPage />} />
-              <Route path="/doctor/patient/:id/decision" element={<DoctorDecisionPage />} />
-              <Route path="/doctor/patient/:id/monitoring" element={<PatientMonitoringPage />} />
-              <Route path="/doctor/patient/:id/culture" element={<CultureSensitivityPage />} />
+              {/* Doctor Protected Routes (Doctor & Admin access) */}
+              <Route path="/doctor/dashboard" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><DoctorDashboardPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patients" element={<RoleProtectedRoute allowedRoles={['doctor', 'nurse', 'admin']}><PatientsListPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patient/:id/clinical" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><PatientClinicalInfoPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patient/:id/amr-risk" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><AMRRiskAssessmentPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patient/:id/explainability" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><ExplainabilitySHAPPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patient/:id/treatment-support" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><TreatmentSupportPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patient/:id/decision" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><DoctorDecisionPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patient/:id/monitoring" element={<RoleProtectedRoute allowedRoles={['doctor', 'nurse', 'admin']}><PatientMonitoringPage /></RoleProtectedRoute>} />
+              <Route path="/doctor/patient/:id/culture" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><CultureSensitivityPage /></RoleProtectedRoute>} />
 
-              {/* Nurse Routes */}
-              <Route path="/nurse/dashboard" element={<NurseDashboardPage />} />
-              <Route path="/nurse/patient/:id" element={<NursePatientDetailPage />} />
+              {/* Nurse Protected Routes (Nurse & Admin & Doctor view access) */}
+              <Route path="/nurse/dashboard" element={<RoleProtectedRoute allowedRoles={['nurse', 'admin', 'doctor']}><NurseDashboardPage /></RoleProtectedRoute>} />
+              <Route path="/nurse/patient/:id" element={<RoleProtectedRoute allowedRoles={['nurse', 'admin', 'doctor']}><NursePatientDetailPage /></RoleProtectedRoute>} />
 
-              {/* Admin Routes */}
-              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-              <Route path="/admin/antibiotics" element={<AntibioticUsagePage />} />
-              <Route path="/admin/ai-performance" element={<AIPerformancePage />} />
-              <Route path="/admin/users" element={<UserManagementPage />} />
+              {/* Admin Protected Routes (Strictly Admin only) */}
+              <Route path="/admin/dashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboardPage /></RoleProtectedRoute>} />
+              <Route path="/admin/antibiotics" element={<RoleProtectedRoute allowedRoles={['admin']}><AntibioticUsagePage /></RoleProtectedRoute>} />
+              <Route path="/admin/ai-performance" element={<RoleProtectedRoute allowedRoles={['admin']}><AIPerformancePage /></RoleProtectedRoute>} />
+              <Route path="/admin/users" element={<RoleProtectedRoute allowedRoles={['admin']}><UserManagementPage /></RoleProtectedRoute>} />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/doctor/dashboard" replace />} />
+              {/* Fallback Catch-all Route */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </AppLayout>
         </Router>

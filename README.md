@@ -6,14 +6,29 @@ ResistomeX is an AI-powered clinical decision-support application designed to as
 
 ---
 
+## 🚦 Project Status & Phase Progress
+
+| Phase | Description | Status | Details |
+| :--- | :--- | :---: | :--- |
+| **Phase 1** | **UI/UX Design & Frontend Foundation** | ✅ **Completed** | Full responsive React 19 + Vite + Tailwind CSS v4 design system with Google Material symbols. |
+| **Phase 2** | **Role-Based Workflows & State API** | ✅ **Completed** | Complete Doctor, Nurse, and Admin workflows across 17 pages with React Context state management. |
+| **Phase 3** | **Database & Cloud Infrastructure** | ✅ **Completed** | PostgreSQL / Supabase schema migrations deployed (`20260926000000_initial_schema.sql`). |
+| **Phase 4** | **Auth & RBAC Security Infrastructure** | ✅ **Completed** | Production RLS security policies & RBAC profile triggers deployed (`20260929000000_phase4_auth_rbac.sql`). |
+| **Phase 5** | **Live Database Integration** | ✅ **Completed** | 100% Supabase database clinical data persistence. Removed mock data fallbacks from all production workflows. |
+| **Phase 6** | **Complete Workflows & Persistence** | ✅ **Completed** | Complete Doctor, Nurse, and Admin workflows verified against Supabase with refresh persistence and null-safe lookups. |
+| **Phase 7** | **Validation, Security & Hardening** | ✅ **Completed** | Input validation, submit state locks (`isSubmitting`), audit trail logging, privacy checks, and verified Vite build. |
+
+---
+
 ## 📋 Table of Contents
 1. [Overview & Problem Statement](#-overview--problem-statement)
 2. [Key Features](#-key-features)
 3. [Role-Based Workflows](#-role-based-workflows)
 4. [Technology Stack](#-technology-stack)
-5. [Project Structure](#-project-structure)
-6. [Getting Started & Installation](#-getting-started--installation)
-7. [Clinical Safety Principles](#-clinical-safety-principles)
+5. [Database & Supabase Connection](#-database--supabase-connection)
+6. [Project Structure](#-project-structure)
+7. [Getting Started & Installation](#-getting-started--installation)
+8. [Clinical Safety Principles](#-clinical-safety-principles)
 
 ---
 
@@ -25,7 +40,7 @@ In clinical settings, physicians often need to initiate empiric antibiotic thera
 
 ---
 
-## ✨ Key Features
+## ✨ Key Features (Implemented)
 
 - 🏥 **Real-Time Surveillance Registry**: Master inpatient directory tracking MRN, ward bed location, suspected pathogens, and current vital signs.
 - 🧬 **AMR Risk Assessment Engine**: Automated risk scoring engine evaluating Gram-negative ESBL, CRE, MRSA, and MDR Pseudomonas risks.
@@ -33,7 +48,7 @@ In clinical settings, physicians often need to initiate empiric antibiotic thera
 - 💊 **Treatment Support Protocol**: First-line vs alternative empiric antibiotic regimen recommendations with renal dosage adjustments and safety warnings.
 - 📋 **Doctor Decision Logging**: Audit-ready decision tracking recording whether the physician accepted, modified, or overridden AI suggestions.
 - 📊 **Patient Monitoring & Culture Verification**: Post-decision response monitoring (CRP, temperature, WBC) alongside bi-directional LIS culture result validation.
-- 👩‍⚕️ **Nurse Worklist & Rapid Vitals Recording**: Dedicated nurse view for shift vital check reminders, rapid vital sign updates, and patient details.
+- 👩‍⚕️ **Nurse Worklist & Rapid Vitals Recording**: Dedicated nurse view for shift vital check reminders, rapid vital sign updates, and patient details with clinical alert thresholds.
 - 🛡️ **Antimicrobial Stewardship & Admin Analytics**: Hospital-wide AMR prevalence trends, Defined Daily Dose (DDD) tracking, AI confusion matrix metrics, and user access management.
 
 ---
@@ -61,24 +76,58 @@ In clinical settings, physicians often need to initiate empiric antibiotic thera
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend Framework** | [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) |
-| **Styling & Design** | [Tailwind CSS v4](https://tailwindcss.com/) + Material Symbols Outlined |
-| **Routing** | [React Router v7](https://reactrouter.com/) |
-| **Icons & Visuals** | Google Material Symbols + Lucide Icons |
-| **Charts & Analytics** | [Recharts](https://recharts.org/) |
-| **State Management** | React Context API (`AuthContext`, `PatientContext`) |
+| Layer | Technology | Status |
+| :--- | :--- | :--- |
+| **Frontend Framework** | [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) | ✅ Implemented |
+| **Styling & Design** | [Tailwind CSS v4](https://tailwindcss.com/) + Material Symbols | ✅ Implemented |
+| **Routing** | [React Router v7](https://reactrouter.com/) | ✅ Implemented |
+| **Charts & Visuals** | [Recharts](https://recharts.org/) | ✅ Implemented |
+| **State Management** | React Context API (`AuthContext`, `PatientContext`) | ✅ Implemented |
+| **Database & Auth** | [Supabase](https://supabase.com/) / PostgreSQL | ✅ Connected & Verified |
+| **Backend API (Planned)**| [FastAPI](https://fastapi.tiangolo.com/) (Python 3.11) | 🟡 Next Integration Phase |
+| **ML Engine (Planned)** | XGBoost + SHAP | 🟡 Next Integration Phase |
+
+---
+
+## ⚡ Database & Supabase Connection
+
+Supabase database integration has been completed and verified live:
+- **Database Schema**: Managed via SQL migrations in [`supabase/migrations/20260926000000_initial_schema.sql`](file:///c:/Users/rosal/Downloads/design/ResistomeX/supabase/migrations/20260926000000_initial_schema.sql) and [`supabase/migrations/20260929000000_phase4_auth_rbac.sql`](file:///c:/Users/rosal/Downloads/design/ResistomeX/supabase/migrations/20260929000000_phase4_auth_rbac.sql) (`patients`, `amr_risk_assessments`, `doctor_decisions`, `patient_vitals`, `culture_results`, `profiles`, `ward_surveillance`, `antibiotic_usage_stats`, `ai_model_metrics`).
+- **Client Configuration**: Initialized in [`frontend/src/services/supabase.js`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/src/services/supabase.js) using environment variables in [`frontend/.env.local`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/.env.local).
+- **Live Database API Client**: [`frontend/src/services/api.js`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/src/services/api.js) fetches live Supabase records. All production workflows are 100% database-backed; silent mock clinical data fallbacks have been removed to ensure fail-fast error alerts.
+
+### Verify Connectivity via Terminal
+You can verify backend status anytime using cURL or Node:
+```powershell
+# Check live Supabase REST connectivity
+curl.exe -i -H "apikey: <VITE_SUPABASE_ANON_KEY>" "<VITE_SUPABASE_URL>/rest/v1/patients?select=count"
+```
+*Status: `HTTP/1.1 200 OK` — Connection Active.*
+
+---
+
+## 📄 Project Verification & Handover Documents
+
+- 📑 **[`FULL_STACK_COMPLETION_REPORT.md`](file:///c:/Users/rosal/Downloads/design/ResistomeX/FULL_STACK_COMPLETION_REPORT.md)**: Comprehensive full-stack verification, security audit, RLS audit, and build testing report.
+- 🤝 **[`FRD_HANDOVER.md`](file:///c:/Users/rosal/Downloads/design/ResistomeX/FRD_HANDOVER.md)**: Technical handover specification for the future FRD team detailing payload structures and integration endpoints for Python FastAPI XGBoost & SHAP services.
 
 ---
 
 ## 📁 Project Structure
 
 ```text
-e:/stitch_resistomex_amr_clinical_support/
-├── ResistomeX_Application_and_Tech_Stack.md   # Application specification document
-├── README.md                                    # Project documentation
+ResistomeX/
+├── README.md                                    # Main project documentation & progress tracking
+├── ResistomeX_Application_and_Tech_Stack.md   # System architecture & clinical spec
+├── PROJECT_STATUS.md                            # Comprehensive full-stack status report
+├── FRD_HANDOVER.md                              # Technical AI/ML handover document for FRD team
+├── FULL_STACK_COMPLETION_REPORT.md              # Full-stack verification & audit report
+├── supabase/
+│   └── migrations/                             # PostgreSQL schema migrations
+│       ├── 20260926000000_initial_schema.sql  # Patients, Decisions, Vitals & AMR tables
+│       └── 20260929000000_phase4_auth_rbac.sql# Production RLS policies & RBAC triggers
 └── frontend/                                   # React + Vite application
+    ├── .env.local                              # Supabase environment configuration
     ├── src/
     │   ├── components/                         # UI Components & Modals
     │   │   ├── AddPatientModal.jsx             # New AMR intake modal
@@ -90,12 +139,13 @@ e:/stitch_resistomex_amr_clinical_support/
     │   │   ├── AuthContext.jsx                 # Role authentication (Doctor, Nurse, Admin)
     │   │   └── PatientContext.jsx              # Central patient state & decision logs
     │   ├── data/
-    │   │   └── mockData.js                     # Clinical dataset & surveillance stats
-    │   ├── pages/                              # Role-based pages
+    │   │   └── mockData.js                     # Isolated dev schema (0 production workflow imports)
+    │   ├── pages/                              # Role-based pages (17 Full-Stack Views)
     │   │   ├── LoginPage.jsx                   # Role sign-in screen
     │   │   ├── DoctorDashboardPage.jsx         # Doctor prioritized worklist
     │   │   ├── PatientsListPage.jsx            # Inpatient registry & patient history
-    │   │   ├── AMRRiskAssessmentPage.jsx       # AMR Risk prediction view
+    │   │   ├── PatientClinicalInfoPage.jsx     # Patient clinical record & history
+    │   │   ├── AMRRiskAssessmentPage.jsx       # AMR Risk prediction view (Heuristic Rule Baseline)
     │   │   ├── ExplainabilitySHAPPage.jsx      # SHAP feature impact view
     │   │   ├── TreatmentSupportPage.jsx        # Empiric antibiotic recommendations
     │   │   ├── DoctorDecisionPage.jsx          # Doctor rationale & decision confirmation
@@ -108,7 +158,8 @@ e:/stitch_resistomex_amr_clinical_support/
     │   │   ├── AIPerformancePage.jsx          # Model performance & confusion matrix
     │   │   └── UserManagementPage.jsx          # Hospital user access control
     │   ├── services/
-    │   │   └── api.js                          # REST API client with fallback
+    │   │   ├── supabase.js                     # Supabase client setup & config checker
+    │   │   └── api.js                          # Database API service client
     │   ├── App.jsx                             # Main layout & router definition
     │   ├── main.jsx                            # React app entry point
     │   └── index.css                           # Tailwind CSS v4 styling rules
@@ -124,19 +175,20 @@ e:/stitch_resistomex_amr_clinical_support/
 ### Prerequisites
 Make sure you have **Node.js** (v18 or higher) installed on your system.
 
-### 1. Clone or Open Workspace
-Navigate to the project root directory:
-
-```bash
-cd e:/stitch_resistomex_amr_clinical_support
-```
-
-### 2. Install Dependencies
-Change into the `frontend` folder and install NPM packages:
+### 1. Open Workspace & Install Dependencies
+Navigate to the `frontend` folder and install NPM packages:
 
 ```bash
 cd frontend
 npm install
+```
+
+### 2. Configure Environment Variables
+Ensure [`frontend/.env.local`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/.env.local) contains your Supabase credentials:
+
+```env
+VITE_SUPABASE_URL=https://bczedkbdwxczzonbbody.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### 3. Run the Development Server
@@ -147,21 +199,13 @@ npm run dev
 ```
 
 Open your browser and navigate to:
-👉 **`http://localhost:5173/`** (or `http://localhost:5174/` if port 5173 is occupied).
+👉 **`http://localhost:5173/`**
 
 ### 4. Demo Login Presets
 Use the built-in quick login buttons on the login screen:
 - **Doctor View**: `Dr. Marcus Vance, MD` (Attending Physician - Infectious Diseases)
 - **Nurse View**: `RN Sarah Jenkins` (ICU Ward Charge Nurse)
 - **Admin View**: `Dr. Elena Rostova` (Antimicrobial Stewardship Director)
-
-### 5. Build for Production
-To generate an optimized bundle:
-
-```bash
-cd frontend
-npm run build
-```
 
 ---
 

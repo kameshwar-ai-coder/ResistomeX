@@ -5,14 +5,49 @@ import { RecordVitalsModal } from '../components/RecordVitalsModal';
 
 export const NursePatientDetailPage = () => {
   const { id } = useParams();
-  const { getPatientById } = usePatients();
-  const patient = getPatientById(id || 'P-72309');
+  const { getPatientById, loading, dbError } = usePatients();
+  const patient = getPatientById(id);
   const [isVitalsModalOpen, setIsVitalsModalOpen] = useState(false);
   const [marLog, setMarLog] = useState([
     { time: '08:00 AM', dose: 'Meropenem 500mg IV', adminBy: 'RN Sarah Jenkins', status: 'Administered' },
     { time: '04:00 PM', dose: 'Meropenem 500mg IV', adminBy: 'RN Sarah Jenkins', status: 'Scheduled' },
     { time: '12:00 AM', dose: 'Meropenem 500mg IV', adminBy: 'Night Shift RN', status: 'Scheduled' }
   ]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading bedside patient details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load bedside details from database.</p>
+          <p className="text-xs text-red-700">{dbError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-2 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-4xl text-[#8e8ea9]">person_off</span>
+          <p className="text-base font-bold text-[#111124]">Patient record not found.</p>
+          <p className="text-xs">The requested bedside patient record could not be retrieved from the database.</p>
+        </div>
+      </div>
+    );
+  }
 
   const toggleMar = (index) => {
     setMarLog(prev => prev.map((item, idx) => {

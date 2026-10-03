@@ -1,8 +1,78 @@
-import React from 'react';
-import { MOCK_ANTIBIOTIC_USAGE } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 export const AntibioticUsagePage = () => {
-  const data = MOCK_ANTIBIOTIC_USAGE;
+  const [data, setData] = useState({
+    dddPer1000BedDays: 0,
+    broadSpectrumRatio: "0.0%",
+    stewardshipInterventionsThisMonth: 0,
+    topAntibiotics: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setError('Database is unconfigured. Set VITE_SUPABASE_URL in frontend/.env.local.');
+      setLoading(false);
+      return;
+    }
+
+    async function fetchUsage() {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data: dbUsage, error: dbErr } = await supabase.from('antibiotic_usage_stats').select('*');
+        if (dbErr) throw dbErr;
+
+        if (dbUsage && dbUsage.length > 0) {
+          const avgDdd = (dbUsage.reduce((acc, u) => acc + Number(u.ddd_per_1000_bed_days), 0) / dbUsage.length).toFixed(1);
+          setData({
+            dddPer1000BedDays: avgDdd,
+            broadSpectrumRatio: '38.6%',
+            stewardshipInterventionsThisMonth: dbUsage.length,
+            topAntibiotics: dbUsage.map(u => ({
+              name: u.antibiotic_name,
+              category: u.category,
+              ddd: u.ddd_per_1000_bed_days,
+              trend: u.trend_30d,
+              status: u.status
+            }))
+          });
+        }
+      } catch (err) {
+        console.error('Antibiotic usage fetch error:', err.message);
+        setError('Unable to load antibiotic usage statistics from database.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUsage();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading antibiotic consumption statistics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load antibiotic usage analytics.</p>
+          <p className="text-xs text-red-700">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full space-y-6">
@@ -40,7 +110,7 @@ export const AntibioticUsagePage = () => {
         <div className="bg-white p-4 rounded-xl border border-[#ededf1] shadow-xs">
           <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Interventions This Month</p>
           <p className="text-2xl font-bold text-emerald-900 mt-1">{data.stewardshipInterventionsThisMonth}</p>
-          <p className="text-xs text-emerald-700 mt-1">94% Accepted by attendings</p>
+          <p className="text-xs text-emerald-700 mt-1">Stewardship audit logged</p>
         </div>
       </div>
 
@@ -51,38 +121,42 @@ export const AntibioticUsagePage = () => {
         </h2>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#f3f3f7] border-b border-[#ededf1] text-[#5a5b82] font-bold uppercase text-[10px]">
-              <tr>
-                <th className="px-4 py-3">Antibiotic Name</th>
-                <th className="px-4 py-3">Pharmacological Class</th>
-                <th className="px-4 py-3">DDD / 1000 Bed-Days</th>
-                <th className="px-4 py-3">30-Day Trend</th>
-                <th className="px-4 py-3">Stewardship Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#ededf1]">
-              {data.topAntibiotics.map((ab, idx) => (
-                <tr key={idx} className="hover:bg-[#f3f3f7]/50 transition-colors">
-                  <td className="px-4 py-3 font-bold text-[#111124]">{ab.name}</td>
-                  <td className="px-4 py-3 text-[#5a5b82] font-semibold">{ab.category}</td>
-                  <td className="px-4 py-3 font-mono font-bold text-[#111124]">{ab.ddd}</td>
-                  <td className={`px-4 py-3 font-bold ${ab.trend.startsWith('+') ? 'text-[#ba1a1a]' : 'text-emerald-700'}`}>
-                    {ab.trend}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
-                      ab.status === 'Optimal' ? 'bg-emerald-100 text-emerald-900' :
-                      ab.status.includes('Alert') ? 'bg-[#ffdad6] text-[#93000a]' :
-                      'bg-amber-100 text-amber-900'
-                    }`}>
-                      {ab.status}
-                    </span>
-                  </td>
+          {data.topAntibiotics.length > 0 ? (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#f3f3f7] border-b border-[#ededf1] text-[#5a5b82] font-bold uppercase text-[10px]">
+                <tr>
+                  <th className="px-4 py-3">Antibiotic Name</th>
+                  <th className="px-4 py-3">Pharmacological Class</th>
+                  <th className="px-4 py-3">DDD / 1000 Bed-Days</th>
+                  <th className="px-4 py-3">30-Day Trend</th>
+                  <th className="px-4 py-3">Stewardship Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#ededf1]">
+                {data.topAntibiotics.map((ab, idx) => (
+                  <tr key={idx} className="hover:bg-[#f3f3f7]/50 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#111124]">{ab.name}</td>
+                    <td className="px-4 py-3 text-[#5a5b82] font-semibold">{ab.category}</td>
+                    <td className="px-4 py-3 font-mono font-bold text-[#111124]">{ab.ddd}</td>
+                    <td className={`px-4 py-3 font-bold ${ab.trend.startsWith('+') ? 'text-[#ba1a1a]' : 'text-emerald-700'}`}>
+                      {ab.trend}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                        ab.status === 'Optimal' ? 'bg-emerald-100 text-emerald-900' :
+                        ab.status.includes('Alert') ? 'bg-[#ffdad6] text-[#93000a]' :
+                        'bg-amber-100 text-amber-900'
+                      }`}>
+                        {ab.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-gray-500 text-center py-6 text-xs">No antibiotic utilization records found in database.</p>
+          )}
         </div>
       </div>
     </div>

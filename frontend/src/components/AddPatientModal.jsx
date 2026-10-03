@@ -6,6 +6,8 @@ import { X, UserPlus, AlertCircle } from 'lucide-react';
 export const AddPatientModal = ({ isOpen, onClose }) => {
   const { addNewPatient } = usePatients();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -27,17 +29,45 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.age || !formData.primaryDiagnosis) return;
-    
-    // Register patient and get created patient object
-    const newPatient = addNewPatient(formData);
-    onClose();
+    setErrorMsg('');
 
-    // Directly navigate to AMR Risk Engine page for the new patient
-    if (newPatient && newPatient.id) {
-      navigate(`/doctor/patient/${newPatient.id}/amr-risk`);
+    const trimmedName = formData.name.trim();
+    const ageNum = parseInt(formData.age, 10);
+    const trimmedDiagnosis = formData.primaryDiagnosis.trim();
+
+    if (!trimmedName) {
+      setErrorMsg('Patient full name is required.');
+      return;
+    }
+    if (isNaN(ageNum) || ageNum < 0 || ageNum > 120) {
+      setErrorMsg('Please enter a valid age between 0 and 120.');
+      return;
+    }
+    if (!trimmedDiagnosis) {
+      setErrorMsg('Primary clinical diagnosis is required.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const newPatient = await addNewPatient({
+        ...formData,
+        name: trimmedName,
+        age: ageNum,
+        primaryDiagnosis: trimmedDiagnosis
+      });
+
+      onClose();
+      if (newPatient && newPatient.id) {
+        navigate(`/doctor/patient/${newPatient.id}/amr-risk`);
+      }
+    } catch (err) {
+      console.error('[AddPatientModal] Failed to register patient:', err.message);
+      setErrorMsg(err.message || 'Failed to register patient in database.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -163,26 +193,41 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
             />
           </div>
 
+          {errorMsg && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+              {errorMsg}
+            </div>
+          )}
+
           <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
             <p className="text-[11px] text-indigo-800">
-              Upon submitting, ResistomeX XGBoost ML model will process the patient parameters and immediately navigate to the AMR Risk Engine page.
+              Upon submitting, patient parameters will be saved to Supabase database and evaluated against clinical risk heuristics.
             </p>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#dcdcec]">
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold text-white bg-[#26263A] hover:bg-[#1b1b2a] rounded-lg shadow-sm"
+              disabled={isSubmitting}
+              className="px-5 py-2 text-xs font-bold text-white bg-[#26263A] hover:bg-[#1b1b2a] rounded-lg shadow-sm disabled:opacity-50 flex items-center gap-1.5"
             >
-              Register & Run AI Assessment
+              {isSubmitting ? (
+                <>
+                  <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                  <span>Registering...</span>
+                </>
+              ) : (
+                'Register Inpatient'
+              )}
             </button>
           </div>
         </form>
