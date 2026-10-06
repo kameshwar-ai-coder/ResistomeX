@@ -1,218 +1,87 @@
-# ResistomeX — AI Antimicrobial Resistance (AMR) Clinical Support System
+# ResistomeX — Clinical AI Antimicrobial Resistance (AMR) Decision Support System
 
-> **Supporting doctors. Protecting patients. Fighting Antimicrobial Resistance (AMR).**
+> **Supporting Doctors. Protecting Patients. Combating Antimicrobial Resistance.**
 
-ResistomeX is an AI-powered clinical decision-support application designed to assist healthcare professionals in assessing Antimicrobial Resistance (AMR) risk profiles and making rapid, evidence-based empiric treatment decisions before lab culture and sensitivity results become available.
-
----
-
-## 🚦 Project Status & Phase Progress
-
-| Phase | Description | Status | Details |
-| :--- | :--- | :---: | :--- |
-| **Phase 1** | **UI/UX Design & Frontend Foundation** | ✅ **Completed** | Full responsive React 19 + Vite + Tailwind CSS v4 design system with Google Material symbols. |
-| **Phase 2** | **Role-Based Workflows & State API** | ✅ **Completed** | Complete Doctor, Nurse, and Admin workflows across 17 pages with React Context state management. |
-| **Phase 3** | **Database & Cloud Infrastructure** | ✅ **Completed** | PostgreSQL / Supabase schema migrations deployed (`20260926000000_initial_schema.sql`). |
-| **Phase 4** | **Auth & RBAC Security Infrastructure** | ✅ **Completed** | Production RLS security policies & RBAC profile triggers deployed (`20260929000000_phase4_auth_rbac.sql`). |
-| **Phase 5** | **Live Database Integration** | ✅ **Completed** | 100% Supabase database clinical data persistence. Removed mock data fallbacks from all production workflows. |
-| **Phase 6** | **Complete Workflows & Persistence** | ✅ **Completed** | Complete Doctor, Nurse, and Admin workflows verified against Supabase with refresh persistence and null-safe lookups. |
-| **Phase 7** | **Validation, Security & Hardening** | ✅ **Completed** | Input validation, submit state locks (`isSubmitting`), audit trail logging, privacy checks, and verified Vite build. |
+ResistomeX is an AI-powered clinical decision-support application designed to assist healthcare teams (Physicians, Nurses, Infection Control & Antimicrobial Stewardship) in assessing Antimicrobial Resistance (AMR) risk and delivering rapid, evidence-based empiric treatment recommendations before laboratory culture and sensitivity results are finalized (which typically require 24–72 hours).
 
 ---
 
-## 📋 Table of Contents
-1. [Overview & Problem Statement](#-overview--problem-statement)
-2. [Key Features](#-key-features)
-3. [Role-Based Workflows](#-role-based-workflows)
-4. [Technology Stack](#-technology-stack)
-5. [Database & Supabase Connection](#-database--supabase-connection)
-6. [Project Structure](#-project-structure)
-7. [Getting Started & Installation](#-getting-started--installation)
-8. [Clinical Safety Principles](#-clinical-safety-principles)
+## 🔬 Core Clinical Capabilities
 
----
-
-## 🔬 Overview & Problem Statement
-
-In clinical settings, physicians often need to initiate empiric antibiotic therapy before microbiology culture and susceptibility results return (which can take 24–72 hours). Selecting ineffective broad-spectrum antibiotics risks clinical failure, while over-prescribing carbapenems accelerates drug resistance.
-
-**ResistomeX** bridges this gap by aggregating patient history, local hospital unit resistance rates, prior antibiotic exposure, and vital signs to predict AMR risk levels (High, Medium, Low) with explainable AI features (SHAP) and tailored antibiotic recommendations.
-
----
-
-## ✨ Key Features (Implemented)
-
-- 🏥 **Real-Time Surveillance Registry**: Master inpatient directory tracking MRN, ward bed location, suspected pathogens, and current vital signs.
-- 🧬 **AMR Risk Assessment Engine**: Automated risk scoring engine evaluating Gram-negative ESBL, CRE, MRSA, and MDR Pseudomonas risks.
-- 🔍 **Explainable AI (SHAP Analytics)**: Transparent breakdown showing *why* a risk prediction was made (prior 90-day antibiotic pressure, prior culture positivity, unit endemic rates).
-- 💊 **Treatment Support Protocol**: First-line vs alternative empiric antibiotic regimen recommendations with renal dosage adjustments and safety warnings.
-- 📋 **Doctor Decision Logging**: Audit-ready decision tracking recording whether the physician accepted, modified, or overridden AI suggestions.
-- 📊 **Patient Monitoring & Culture Verification**: Post-decision response monitoring (CRP, temperature, WBC) alongside bi-directional LIS culture result validation.
-- 👩‍⚕️ **Nurse Worklist & Rapid Vitals Recording**: Dedicated nurse view for shift vital check reminders, rapid vital sign updates, and patient details with clinical alert thresholds.
-- 🛡️ **Antimicrobial Stewardship & Admin Analytics**: Hospital-wide AMR prevalence trends, Defined Daily Dose (DDD) tracking, AI confusion matrix metrics, and user access management.
+- **🧬 Calibrated ML Risk Prediction**: Calibrated XGBoost classifier trained on multi-site clinical encounters predicting probability of drug-resistant pathogens.
+- **🔍 Explainable AI (TreeSHAP Analytics)**: Instant feature contribution waterfall analysis explaining patient-specific risk drivers (e.g., prior 90-day antibiotic pressure, colonization history, unit endemic rates, renal function).
+- **💊 Rule-Guided Empiric Treatment Engine**: Pathogen- and syndrome-specific first-line & alternative empiric antibiotic regimens adjusted for renal clearance and documented drug allergies.
+- **🔄 Active Learning Decision Loop**: Clinicians can Accept, Modify, or Override recommendations with structured clinical rationales, recording reward signals to continuously refine and retrain AI models.
+- **🧫 Culture Ground-Truth Verification**: Direct microbiological culture & AST (Antimicrobial Susceptibility Testing) result logging to validate predictive concordance and close the clinical learning loop.
+- **📈 Comprehensive Monitoring & Stewardship**: Bedside vital sign tracking, CRP deterioration alerts, ward-level surveillance, and Defined Daily Dose (DDD) metrics.
 
 ---
 
 ## 👥 Role-Based Workflows
 
 ### 🩺 Doctor View (`/doctor/dashboard`)
-- **Physician Worklist**: Prioritized card dashboard highlighting high-risk inpatients and pending lab cultures.
-- **Add Patient Modal**: Seamless intake modal with auto-navigation to the AMR Risk Engine (`/doctor/patient/:id/amr-risk`).
-- **Inpatient Directory & History**: Master registry with fast search filters.
-- **Clinical Decision Portal**: Single-click access to AMR risk, SHAP feature impact, treatment support options, and decision acceptance.
+- Prioritized patient worklist highlighting high-risk inpatients and pending lab cultures.
+- Inpatient directory with search, filter, and 10k cohort streaming.
+- AMR risk assessment with TreeSHAP feature explanations.
+- Empiric antibiotic regimen selection with renal dosing and allergy warnings.
+- Continuous active learning feedback portal (Accept / Modify / Override).
 
 ### 🏥 Nurse View (`/nurse/dashboard`)
-- **Ward Worklist**: Inpatient card grid highlighting vital check reminders and current regimens.
-- **Update Vitals Modal**: Modal for recording Q2H vital sign updates with automatic threshold deterioration alerts.
-- **Nurse Patient Details**: Specialized bedside monitoring view without doctor-specific prescribing actions.
+- Inpatient bed grid with shift check reminders and active medication regimens.
+- Rapid vital signs recording modal with automatic clinical threshold deterioration alerts.
+- Dedicated bedside monitoring view.
 
 ### 🛡️ Admin & Stewardship View (`/admin/dashboard`)
-- **Hospital Overview**: High-level surveillance stats and ward-by-ward AMR prevalence.
-- **Antibiotic Usage**: DDD tracking per 1,000 bed days and stewardship intervention counters.
-- **AI Performance**: Model accuracy metrics (ROC-AUC 0.912, Sensitivity, Specificity) and confusion matrix visualization.
-- **User Management**: Role assignment and credential status toggling for hospital personnel.
+- Hospital-wide AMR prevalence trends across wards (ICU, Oncology, General Ward, Emergency).
+- Antibiotic usage metrics & Defined Daily Dose (DDD) per 1,000 bed days.
+- AI Model performance metrics (ROC-AUC, Precision, Recall, Confusion Matrix).
+- Staff access management and audit logging.
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Architecture & Tech Stack
 
-| Layer | Technology | Status |
+| Component | Technology | Description |
 | :--- | :--- | :--- |
-| **Frontend Framework** | [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) | ✅ Implemented |
-| **Styling & Design** | [Tailwind CSS v4](https://tailwindcss.com/) + Material Symbols | ✅ Implemented |
-| **Routing** | [React Router v7](https://reactrouter.com/) | ✅ Implemented |
-| **Charts & Visuals** | [Recharts](https://recharts.org/) | ✅ Implemented |
-| **State Management** | React Context API (`AuthContext`, `PatientContext`) | ✅ Implemented |
-| **Database & Auth** | [Supabase](https://supabase.com/) / PostgreSQL | ✅ Connected & Verified |
-| **Backend API (Planned)**| [FastAPI](https://fastapi.tiangolo.com/) (Python 3.11) | 🟡 Next Integration Phase |
-| **ML Engine (Planned)** | XGBoost + SHAP | 🟡 Next Integration Phase |
+| **Frontend** | React 19, Vite, Tailwind CSS, Recharts | Interactive clinical user interface |
+| **Backend API** | Python 3.11+, FastAPI, Uvicorn, Pydantic | Asynchronous REST microservices |
+| **Machine Learning** | XGBoost, Scikit-Learn, SHAP | Calibrated AMR probability & feature attribution |
+| **Database** | PostgreSQL / Supabase | Relational store for encounters, vitals & audit logs |
 
 ---
 
-## ⚡ Database & Supabase Connection
+## 🚀 Getting Started & Running Locally
 
-Supabase database integration has been completed and verified live:
-- **Database Schema**: Managed via SQL migrations in [`supabase/migrations/20260926000000_initial_schema.sql`](file:///c:/Users/rosal/Downloads/design/ResistomeX/supabase/migrations/20260926000000_initial_schema.sql) and [`supabase/migrations/20260929000000_phase4_auth_rbac.sql`](file:///c:/Users/rosal/Downloads/design/ResistomeX/supabase/migrations/20260929000000_phase4_auth_rbac.sql) (`patients`, `amr_risk_assessments`, `doctor_decisions`, `patient_vitals`, `culture_results`, `profiles`, `ward_surveillance`, `antibiotic_usage_stats`, `ai_model_metrics`).
-- **Client Configuration**: Initialized in [`frontend/src/services/supabase.js`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/src/services/supabase.js) using environment variables in [`frontend/.env.local`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/.env.local).
-- **Live Database API Client**: [`frontend/src/services/api.js`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/src/services/api.js) fetches live Supabase records. All production workflows are 100% database-backed; silent mock clinical data fallbacks have been removed to ensure fail-fast error alerts.
+### 1. Prerequisites
+- **Node.js** (v18+)
+- **Python** (v3.10+)
 
-### Verify Connectivity via Terminal
-You can verify backend status anytime using cURL or Node:
+### 2. Backend Setup
 ```powershell
-# Check live Supabase REST connectivity
-curl.exe -i -H "apikey: <VITE_SUPABASE_ANON_KEY>" "<VITE_SUPABASE_URL>/rest/v1/patients?select=count"
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-*Status: `HTTP/1.1 200 OK` — Connection Active.*
+API Documentation will be available at: `http://localhost:8000/docs`
 
----
-
-## 📄 Project Verification & Handover Documents
-
-- 📑 **[`FULL_STACK_COMPLETION_REPORT.md`](file:///c:/Users/rosal/Downloads/design/ResistomeX/FULL_STACK_COMPLETION_REPORT.md)**: Comprehensive full-stack verification, security audit, RLS audit, and build testing report.
-- 🤝 **[`FRD_HANDOVER.md`](file:///c:/Users/rosal/Downloads/design/ResistomeX/FRD_HANDOVER.md)**: Technical handover specification for the future FRD team detailing payload structures and integration endpoints for Python FastAPI XGBoost & SHAP services.
-
----
-
-## 📁 Project Structure
-
-```text
-ResistomeX/
-├── README.md                                    # Main project documentation & progress tracking
-├── ResistomeX_Application_and_Tech_Stack.md   # System architecture & clinical spec
-├── PROJECT_STATUS.md                            # Comprehensive full-stack status report
-├── FRD_HANDOVER.md                              # Technical AI/ML handover document for FRD team
-├── FULL_STACK_COMPLETION_REPORT.md              # Full-stack verification & audit report
-├── supabase/
-│   └── migrations/                             # PostgreSQL schema migrations
-│       ├── 20260926000000_initial_schema.sql  # Patients, Decisions, Vitals & AMR tables
-│       └── 20260929000000_phase4_auth_rbac.sql# Production RLS policies & RBAC triggers
-└── frontend/                                   # React + Vite application
-    ├── .env.local                              # Supabase environment configuration
-    ├── src/
-    │   ├── components/                         # UI Components & Modals
-    │   │   ├── AddPatientModal.jsx             # New AMR intake modal
-    │   │   ├── RecordVitalsModal.jsx          # Nurse vital update modal
-    │   │   ├── Navbar.jsx                      # Header with search & user profile
-    │   │   ├── Sidebar.jsx                     # Role-aware sidebar navigation
-    │   │   └── PatientHeader.jsx               # Contextual patient sub-tab bar
-    │   ├── context/                            # React Context Providers
-    │   │   ├── AuthContext.jsx                 # Role authentication (Doctor, Nurse, Admin)
-    │   │   └── PatientContext.jsx              # Central patient state & decision logs
-    │   ├── data/
-    │   │   └── mockData.js                     # Isolated dev schema (0 production workflow imports)
-    │   ├── pages/                              # Role-based pages (17 Full-Stack Views)
-    │   │   ├── LoginPage.jsx                   # Role sign-in screen
-    │   │   ├── DoctorDashboardPage.jsx         # Doctor prioritized worklist
-    │   │   ├── PatientsListPage.jsx            # Inpatient registry & patient history
-    │   │   ├── PatientClinicalInfoPage.jsx     # Patient clinical record & history
-    │   │   ├── AMRRiskAssessmentPage.jsx       # AMR Risk prediction view (Heuristic Rule Baseline)
-    │   │   ├── ExplainabilitySHAPPage.jsx      # SHAP feature impact view
-    │   │   ├── TreatmentSupportPage.jsx        # Empiric antibiotic recommendations
-    │   │   ├── DoctorDecisionPage.jsx          # Doctor rationale & decision confirmation
-    │   │   ├── PatientMonitoringPage.jsx       # Post-treatment vital response timeline
-    │   │   ├── CultureSensitivityPage.jsx      # LIS microbiology culture verification
-    │   │   ├── NurseDashboardPage.jsx          # Nurse shift worklist
-    │   │   ├── NursePatientDetailPage.jsx      # Nurse bedside patient details
-    │   │   ├── AdminDashboardPage.jsx          # Stewardship overview
-    │   │   ├── AntibioticUsagePage.jsx         # Antibiotic DDD analytics
-    │   │   ├── AIPerformancePage.jsx          # Model performance & confusion matrix
-    │   │   └── UserManagementPage.jsx          # Hospital user access control
-    │   ├── services/
-    │   │   ├── supabase.js                     # Supabase client setup & config checker
-    │   │   └── api.js                          # Database API service client
-    │   ├── App.jsx                             # Main layout & router definition
-    │   ├── main.jsx                            # React app entry point
-    │   └── index.css                           # Tailwind CSS v4 styling rules
-    ├── index.html                              # Google Fonts & HTML shell
-    ├── vite.config.js                          # Vite configuration
-    └── package.json                            # Dependencies & scripts
-```
-
----
-
-## 🚀 Getting Started & Installation
-
-### Prerequisites
-Make sure you have **Node.js** (v18 or higher) installed on your system.
-
-### 1. Open Workspace & Install Dependencies
-Navigate to the `frontend` folder and install NPM packages:
-
-```bash
+### 3. Frontend Setup
+```powershell
 cd frontend
 npm install
-```
-
-### 2. Configure Environment Variables
-Ensure [`frontend/.env.local`](file:///c:/Users/rosal/Downloads/design/ResistomeX/frontend/.env.local) contains your Supabase credentials:
-
-```env
-VITE_SUPABASE_URL=https://bczedkbdwxczzonbbody.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
-
-### 3. Run the Development Server
-Launch the local dev server:
-
-```bash
 npm run dev
 ```
+Access the application at: `http://localhost:5173/`
 
-Open your browser and navigate to:
-👉 **`http://localhost:5173/`**
-
-### 4. Demo Login Presets
-Use the built-in quick login buttons on the login screen:
-- **Doctor View**: `Dr. Marcus Vance, MD` (Attending Physician - Infectious Diseases)
-- **Nurse View**: `RN Sarah Jenkins` (ICU Ward Charge Nurse)
-- **Admin View**: `Dr. Elena Rostova` (Antimicrobial Stewardship Director)
+### 4. Running Verification & Smoke Tests
+```powershell
+# Run backend AI inference and API smoke tests
+python backend/smoke_test.py
+```
 
 ---
 
 ## ⚖️ Clinical Safety Principles
 
-ResistomeX is designed strictly as a **clinical decision-support prototype**:
-
-1. **Supporting Doctors, Not Replacing Them**: The software never automatically prescribes antibiotics. The attending physician retains full responsibility for clinical decisions.
-2. **Explainable AI (XAI)**: Predictions transparently cite key driver risk factors (SHAP values) so clinicians can verify the clinical reasoning behind a score.
-3. **Antimicrobial Stewardship Alignment**: Guidance aligns with institutional stewardship protocols to prevent unnecessary use of broad-spectrum carbapenems.
+1. **Decision Support, Not Replacement**: ResistomeX provides recommendations to assist attending physicians; prescribing decisions always remain with licensed clinical professionals.
+2. **Explainable AI (XAI)**: Every prediction presents key contributing factors (SHAP values) so clinicians can verify the clinical reasoning.
+3. **Stewardship Alignment**: Empiric regimens are calibrated to prevent unnecessary carbapenem and broad-spectrum antibiotic overuse.
