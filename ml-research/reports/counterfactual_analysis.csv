@@ -1,0 +1,5 @@
+scenario,mean_delta,median_delta,min_delta,max_delta,evaluated_encounters
+Zero Prior Antibiotics,-0.1078,-0.1227,-0.2877,0.0434,50
+No Prior Resistant Organism,-0.0725,0.0,-0.3177,0.0,50
+Low Ward Resistance (15%),-0.0466,-0.0435,-0.1604,0.0156,50
+High Ward Resistance (45%),0.0619,0.0618,-0.0091,0.1713,50

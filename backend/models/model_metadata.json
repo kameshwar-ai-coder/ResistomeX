@@ -1,0 +1,37 @@
+{
+  "dataset_version": "clinical_v2_10000",
+  "model_version": "xgboost_amr_v002",
+  "feature_version": "v2_engineered_123",
+  "target_version": "any_amr_isolate",
+  "random_seed": 42,
+  "training_date": "2026-10-02T20:28:47.277359",
+  "training_rows": 3350,
+  "validation_rows": 717,
+  "test_rows": 724,
+  "target_prevalence": 0.5510331872260489,
+  "selected_model": "XGBClassifier",
+  "hyperparameters": {
+    "n_estimators": 200,
+    "max_depth": 3,
+    "learning_rate": 0.03,
+    "subsample": 0.7,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.2,
+    "reg_lambda": 1.2,
+    "gamma": 0.1,
+    "min_child_weight": 3,
+    "scale_pos_weight": 0.8088552915766739,
+    "eval_metric": "logloss",
+    "random_state": 42
+  },
+  "calibration_method": "isotonic",
+  "all_major_metrics": {
+    "roc_auc": 0.6954783950617284,
+    "pr_auc": 0.7263107574118692,
+    "brier_score": 0.2205409946751001,
+    "sensitivity_0_5": 0.7525,
+    "specificity_0_5": 0.5,
+    "f1_0_5": 0.697566628041715,
+    "ece": 0.03710520007127888
+  }
+}

@@ -1,0 +1,78 @@
+# ResistomeX Master AI Pipeline Configuration (v2 — 10k Cohort)
+project_name: "ResistomeX_Clinical_AMR_AI"
+version: "2.0.0"
+dataset_version: "synthetic_v2_10000"
+random_seed: 42
+
+data:
+  raw_path: "data/synthetic/resistomex_synthetic_v2_10000.csv"
+  synthetic_path: "data/synthetic/resistomex_synthetic_v2_10000.csv"
+  old_synthetic_path: "data/synthetic/ResistomeX_synthetic_1000_encounters.csv"
+  processed_dir: "data/processed"
+  feature_mapping_path: "config/feature_mapping.yaml"
+  patient_id_col: "patient_id"
+  encounter_id_col: "encounter_id"
+  admission_datetime_col: "admission_datetime"
+
+target:
+  selected_target: "any_amr_isolate"
+  culture_status_col: "culture_status"
+  phenotype_col: "resistance_phenotype"
+  min_samples: 100
+  min_positive_samples: 30
+
+splitting:
+  strategy: "group_patient"
+  test_size: 0.15
+  val_size: 0.15
+  n_cv_folds: 5
+  temporal_split_col: "admission_datetime"
+
+thresholds:
+  - 0.10
+  - 0.20
+  - 0.30
+  - 0.40
+  - 0.50
+  - 0.60
+  - 0.70
+  - 0.80
+  - 0.90
+
+xgboost:
+  hyperparameters:
+    n_estimators: 200
+    max_depth: 4
+    learning_rate: 0.04
+    subsample: 0.85
+    colsample_bytree: 0.80
+    min_child_weight: 3
+    gamma: 0.1
+    reg_alpha: 0.2
+    reg_lambda: 1.2
+    random_state: 42
+    eval_metric: "logloss"
+  tuning:
+    enabled: true
+    n_iter: 25
+    scoring: "roc_auc"
+
+calibration:
+  methods:
+    - "isotonic"
+    - "sigmoid"
+
+bootstrap:
+  n_iterations: 1000
+  alpha: 0.05
+
+llm:
+  provider: "local_adapter"
+  temperature: 0.0
+  n_consistency_runs: 3
+  model_name: "clinical-amr-extractor-v2"
+
+output:
+  models_dir: "models"
+  plots_dir: "plots"
+  reports_dir: "reports"

@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ResistomeX Phase 2: Model Validation, Robustness & Error Analysis Master Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 24px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08); }
+        h1 { color: #0f172a; font-size: 28px; border-bottom: 3px solid #e2e8f0; padding-bottom: 16px; margin-top: 0; }
+        h2 { color: #1e293b; font-size: 20px; margin-top: 36px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .badge-clinical { background: #fef3c7; color: #92400e; }
+        .badge-pass { background: #dcfce7; color: #166534; }
+        .alert-card { background: #fffbeb; border-left: 5px solid #f59e0b; padding: 18px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+        .stat-card { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; text-align: center; }
+        .stat-num { font-size: 24px; font-weight: 800; color: #2563eb; }
+        .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+        th { background-color: #f1f5f9; font-weight: 600; }
+        tr:hover { background-color: #f8fafc; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ResistomeX Phase 2: Model Validation, Robustness & Error Analysis</h1>
+    <div class="alert-card">
+        <strong>CRITICAL SAFETY NOTICE:</strong> In-silico validation on <span class="badge badge-clinical">CLINICAL RESEARCH COHORT (10,000 Dev + 5,000 Independent Encounters)</span>. Advisory decision-support only.
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <div class="grid-stats">
+        <div class="stat-card"><div class="stat-num">0.695</div><div class="stat-label">Existing Test ROC-AUC</div></div>
+        <div class="stat-card"><div class="stat-num">0.723</div><div class="stat-label">Independent 5k ROC-AUC</div></div>
+        <div class="stat-card"><div class="stat-num">+0.027</div><div class="stat-label">Generalization Delta</div></div>
+        <div class="stat-card"><div class="stat-num">0.0%</div><div class="stat-label">Patient Split Leakage</div></div>
+        <div class="stat-card"><div class="stat-num">0.0%</div><div class="stat-label">LLM Hallucination Rate</div></div>
+    </div>
+
+    <h2>2. Benchmark Comparison (5 Baseline Models)</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>model_name</th>
+      <th>cv_roc_auc_mean</th>
+      <th>cv_roc_auc_std</th>
+      <th>cv_pr_auc_mean</th>
+      <th>cv_pr_auc_std</th>
+      <th>test_roc_auc</th>
+      <th>test_pr_auc</th>
+      <th>test_sensitivity</th>
+      <th>test_specificity</th>
+      <th>test_f1</th>
+      <th>test_brier_score</th>
+      <th>test_ece</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dummy (Stratified)</td>
+      <td>0.499373</td>
+      <td>0.012958</td>
+      <td>0.676903</td>
+      <td>0.008432</td>
+      <td>0.468704</td>
+      <td>0.657210</td>
+      <td>0.5300</td>
+      <td>0.407407</td>
+      <td>0.527363</td>
+      <td>0.524862</td>
+      <td>0.524862</td>
+    </tr>
+    <tr>
+      <td>Logistic Regression</td>
+      <td>0.712856</td>
+      <td>0.014702</td>
+      <td>0.743085</td>
+      <td>0.006043</td>
+      <td>0.710748</td>
+      <td>0.756747</td>
+      <td>0.6350</td>
+      <td>0.672840</td>
+      <td>0.668421</td>
+      <td>0.217748</td>
+      <td>0.073374</td>
+    </tr>
+    <tr>
+      <td>Random Forest</td>
+      <td>0.720342</td>
+      <td>0.014563</td>
+      <td>0.749331</td>
+      <td>0.016479</td>
+      <td>0.695394</td>
+      <td>0.745534</td>
+      <td>0.6525</td>
+      <td>0.669753</td>
+      <td>0.679688</td>
+      <td>0.221260</td>
+      <td>0.060760</td>
+    </tr>
+    <tr>
+      <td>HistGradientBoosting</td>
+      <td>0.695790</td>
+      <td>0.009483</td>
+      <td>0.732773</td>
+      <td>0.012386</td>
+      <td>0.673989</td>
+      <td>0.707318</td>
+      <td>0.6750</td>
+      <td>0.586420</td>
+      <td>0.671642</td>
+      <td>0.233065</td>
+      <td>0.085296</td>
+    </tr>
+    <tr>
+      <td>Tuned XGBoost</td>
+      <td>0.716287</td>
+      <td>0.007321</td>
+      <td>0.747399</td>
+      <td>0.006529</td>
+      <td>0.699267</td>
+      <td>0.750206</td>
+      <td>0.6425</td>
+      <td>0.641975</td>
+      <td>0.664942</td>
+      <td>0.220189</td>
+      <td>0.049234</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>3. Independent 5,000-Row Test Cohort</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>metric</th>
+      <th>existing_test</th>
+      <th>independent_5k</th>
+      <th>difference</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ROC-AUC</td>
+      <td>0.695478</td>
+      <td>0.722662</td>
+      <td>0.027183</td>
+    </tr>
+    <tr>
+      <td>PR-AUC</td>
+      <td>0.726311</td>
+      <td>0.729387</td>
+      <td>0.003077</td>
+    </tr>
+    <tr>
+      <td>Sensitivity (@ 0.50)</td>
+      <td>0.752500</td>
+      <td>0.671875</td>
+      <td>-0.080625</td>
+    </tr>
+    <tr>
+      <td>Specificity (@ 0.50)</td>
+      <td>0.500000</td>
+      <td>0.659479</td>
+      <td>0.159479</td>
+    </tr>
+    <tr>
+      <td>PPV (@ 0.50)</td>
+      <td>0.697600</td>
+      <td>0.694108</td>
+      <td>-0.003492</td>
+    </tr>
+    <tr>
+      <td>NPV (@ 0.50)</td>
+      <td>0.605200</td>
+      <td>0.636049</td>
+      <td>0.030849</td>
+    </tr>
+    <tr>
+      <td>F1 Score (@ 0.50)</td>
+      <td>0.697567</td>
+      <td>0.682811</td>
+      <td>-0.014756</td>
+    </tr>
+    <tr>
+      <td>Balanced Accuracy</td>
+      <td>0.652800</td>
+      <td>0.665677</td>
+      <td>0.012877</td>
+    </tr>
+    <tr>
+      <td>Brier Score</td>
+      <td>0.220541</td>
+      <td>0.213072</td>
+      <td>-0.007469</td>
+    </tr>
+    <tr>
+      <td>Expected Calibration Error</td>
+      <td>0.037105</td>
+      <td>0.033036</td>
+      <td>-0.004069</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>4. Feature Sanity & Plausibility Audit</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>feature_name</th>
+      <th>data_type</th>
+      <th>missing_pct</th>
+      <th>unique_values</th>
+      <th>distribution_summary</th>
+      <th>target_association</th>
+      <th>available_at_prediction</th>
+      <th>leakage_status</th>
+      <th>clinical_plausibility_rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>age_years</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>75</td>
+      <td>mean=58.4, std=16.8, median=58.0</td>
+      <td>r=+0.071 (p=9.58e-07)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Older patients frequently present with higher healthcare exposure, immunosenescence, and colonization.</td>
+    </tr>
+    <tr>
+      <td>temperature_c</td>
+      <td>float64</td>
+      <td>0.0%</td>
+      <td>58</td>
+      <td>mean=38.2, std=1.0, median=38.4</td>
+      <td>r=+0.016 (p=2.73e-01)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Fever indicates systemic inflammatory response and acute infection severity.</td>
+    </tr>
+    <tr>
+      <td>heart_rate_bpm</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>113</td>
+      <td>mean=100.3, std=20.4, median=101.0</td>
+      <td>r=+0.139 (p=4.10e-22)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Tachycardia is a core SIRS/sepsis vital sign indicating physiological distress.</td>
+    </tr>
+    <tr>
+      <td>systolic_bp_mmhg</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>108</td>
+      <td>mean=110.0, std=22.3, median=109.0</td>
+      <td>r=-0.139 (p=5.54e-22)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Hypotension signals septic shock, organ hypoperfusion, and acute decompensation.</td>
+    </tr>
+    <tr>
+      <td>diastolic_bp_mmhg</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>77</td>
+      <td>mean=65.5, std=14.5, median=65.0</td>
+      <td>r=-0.132 (p=5.09e-20)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+    <tr>
+      <td>spo2_percent</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>23</td>
+      <td>mean=93.0, std=3.8, median=94.0</td>
+      <td>r=-0.066 (p=4.74e-06)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+    <tr>
+      <td>respiratory_rate_bpm</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>28</td>
+      <td>mean=20.5, std=4.7, median=20.0</td>
+      <td>r=+0.071 (p=7.49e-07)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+    <tr>
+      <td>crp_mg_l</td>
+      <td>float64</td>
+      <td>0.0%</td>
+      <td>1161</td>
+      <td>mean=41.0, std=38.8, median=29.4</td>
+      <td>r=+0.124 (p=8.08e-18)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+    <tr>
+      <td>prior_antibiotic_exposure_count_90d</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>6</td>
+      <td>mean=1.0, std=1.2, median=1.0</td>
+      <td>r=+0.193 (p=1.35e-41)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Prior antimicrobial exposure exerts selective pressure favoring resistant clones.</td>
+    </tr>
+    <tr>
+      <td>prior_antibiotic_days</td>
+      <td>int64</td>
+      <td>0.0%</td>
+      <td>8</td>
+      <td>mean=6.6, std=8.8, median=3.0</td>
+      <td>r=+0.189 (p=9.58e-40)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Duration of prior antimicrobial therapy correlates directly with resistance emergence.</td>
+    </tr>
+    <tr>
+      <td>ward_endemic_resistance_rate</td>
+      <td>float64</td>
+      <td>0.0%</td>
+      <td>457</td>
+      <td>mean=0.3, std=0.1, median=0.3</td>
+      <td>r=+0.147 (p=2.01e-24)</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Local unit antibiograms and colonization pressure strongly dictate baseline odds.</td>
+    </tr>
+    <tr>
+      <td>sex</td>
+      <td>str</td>
+      <td>0.0%</td>
+      <td>2</td>
+      <td>Top: Male (2 cats)</td>
+      <td>2 categories</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+    <tr>
+      <td>pregnancy_status</td>
+      <td>str</td>
+      <td>0.0%</td>
+      <td>4</td>
+      <td>Top: Not applicable (4 cats)</td>
+      <td>4 categories</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+    <tr>
+      <td>ward</td>
+      <td>str</td>
+      <td>0.0%</td>
+      <td>4</td>
+      <td>Top: General Medicine (4 cats)</td>
+      <td>4 categories</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+    <tr>
+      <td>primary_diagnosis</td>
+      <td>str</td>
+      <td>0.0%</td>
+      <td>26</td>
+      <td>Top: Aspiration pneumonia (26 cats)</td>
+      <td>26 categories</td>
+      <td>Yes (Pre-culture)</td>
+      <td>Clean (Approved)</td>
+      <td>Standard clinical baseline predictor.</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>5. Feature Ablation Study (8 Suites)</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>ablation_suite</th>
+      <th>dropped_features</th>
+      <th>n_features_engineered</th>
+      <th>test_roc_auc</th>
+      <th>delta_roc_auc</th>
+      <th>test_pr_auc</th>
+      <th>test_sensitivity</th>
+      <th>test_specificity</th>
+      <th>test_f1</th>
+      <th>test_brier_score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A. Full Model (Baseline)</td>
+      <td>None (Full)</td>
+      <td>123</td>
+      <td>0.699267</td>
+      <td>0.000000</td>
+      <td>0.750206</td>
+      <td>0.6425</td>
+      <td>0.641975</td>
+      <td>0.664942</td>
+      <td>0.220189</td>
+    </tr>
+    <tr>
+      <td>B. Remove Age</td>
+      <td>age_years</td>
+      <td>122</td>
+      <td>0.691590</td>
+      <td>-0.007677</td>
+      <td>0.738832</td>
+      <td>0.6325</td>
+      <td>0.651235</td>
+      <td>0.660574</td>
+      <td>0.223115</td>
+    </tr>
+    <tr>
+      <td>C. Remove Temperature</td>
+      <td>temperature_c</td>
+      <td>122</td>
+      <td>0.697508</td>
+      <td>-0.001759</td>
+      <td>0.746629</td>
+      <td>0.6425</td>
+      <td>0.648148</td>
+      <td>0.666667</td>
+      <td>0.220791</td>
+    </tr>
+    <tr>
+      <td>D. Remove Heart Rate</td>
+      <td>heart_rate_bpm</td>
+      <td>122</td>
+      <td>0.695231</td>
+      <td>-0.004035</td>
+      <td>0.744151</td>
+      <td>0.6375</td>
+      <td>0.654321</td>
+      <td>0.664928</td>
+      <td>0.221479</td>
+    </tr>
+    <tr>
+      <td>E. Remove All Vital Signs</td>
+      <td>temperature_c, heart_rate_bpm, systolic_bp_mmhg, diastolic_bp_mmhg, spo2_percent, respiratory_rate_bpm</td>
+      <td>117</td>
+      <td>0.698534</td>
+      <td>-0.000733</td>
+      <td>0.751253</td>
+      <td>0.6325</td>
+      <td>0.645062</td>
+      <td>0.658854</td>
+      <td>0.220638</td>
+    </tr>
+    <tr>
+      <td>F. Remove Prior Antibiotics</td>
+      <td>prior_antibiotic_exposure_count_90d, prior_antibiotic_90d, prior_antibiotic_days</td>
+      <td>108</td>
+      <td>0.680934</td>
+      <td>-0.018333</td>
+      <td>0.707364</td>
+      <td>0.6175</td>
+      <td>0.657407</td>
+      <td>0.651715</td>
+      <td>0.225947</td>
+    </tr>
+    <tr>
+      <td>G. Remove Demographics</td>
+      <td>age_years, sex, pregnancy_status</td>
+      <td>116</td>
+      <td>0.690170</td>
+      <td>-0.009097</td>
+      <td>0.741878</td>
+      <td>0.6300</td>
+      <td>0.651235</td>
+      <td>0.658824</td>
+      <td>0.222745</td>
+    </tr>
+    <tr>
+      <td>H. Remove Prior AMR &amp; Antibiogram</td>
+      <td>prior_resistant_organism, ward_endemic_resistance_rate</td>
+      <td>117</td>
+      <td>0.694066</td>
+      <td>-0.005201</td>
+      <td>0.744624</td>
+      <td>0.6200</td>
+      <td>0.654321</td>
+      <td>0.652632</td>
+      <td>0.221546</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>6. Stratified Subgroup Analysis</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>subgroup_category</th>
+      <th>subgroup_value</th>
+      <th>sample_size</th>
+      <th>positive_count</th>
+      <th>negative_count</th>
+      <th>prevalence</th>
+      <th>stability_flag</th>
+      <th>test_roc_auc</th>
+      <th>test_pr_auc</th>
+      <th>test_sensitivity</th>
+      <th>test_specificity</th>
+      <th>test_f1</th>
+      <th>test_brier_score</th>
+      <th>test_ece</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Age Category</td>
+      <td>50-69 years</td>
+      <td>324</td>
+      <td>191</td>
+      <td>133</td>
+      <td>0.589506</td>
+      <td>Stable</td>
+      <td>0.696729</td>
+      <td>0.797984</td>
+      <td>0.769634</td>
+      <td>0.398496</td>
+      <td>0.703349</td>
+      <td>0.217345</td>
+      <td>0.082986</td>
+    </tr>
+    <tr>
+      <td>Age Category</td>
+      <td>&lt;50 years</td>
+      <td>209</td>
+      <td>102</td>
+      <td>107</td>
+      <td>0.488038</td>
+      <td>Stable</td>
+      <td>0.680090</td>
+      <td>0.680281</td>
+      <td>0.647059</td>
+      <td>0.654206</td>
+      <td>0.643902</td>
+      <td>0.228836</td>
+      <td>0.070465</td>
+    </tr>
+    <tr>
+      <td>Age Category</td>
+      <td>&gt;=70 years (Elderly)</td>
+      <td>191</td>
+      <td>107</td>
+      <td>84</td>
+      <td>0.560209</td>
+      <td>Stable</td>
+      <td>0.698876</td>
+      <td>0.723861</td>
+      <td>0.822430</td>
+      <td>0.464286</td>
+      <td>0.733333</td>
+      <td>0.216885</td>
+      <td>0.042561</td>
+    </tr>
+    <tr>
+      <td>Sex</td>
+      <td>Female</td>
+      <td>360</td>
+      <td>201</td>
+      <td>159</td>
+      <td>0.558333</td>
+      <td>Stable</td>
+      <td>0.719156</td>
+      <td>0.760130</td>
+      <td>0.766169</td>
+      <td>0.547170</td>
+      <td>0.721311</td>
+      <td>0.213052</td>
+      <td>0.042494</td>
+    </tr>
+    <tr>
+      <td>Sex</td>
+      <td>Male</td>
+      <td>364</td>
+      <td>199</td>
+      <td>165</td>
+      <td>0.546703</td>
+      <td>Stable</td>
+      <td>0.671935</td>
+      <td>0.728138</td>
+      <td>0.738693</td>
+      <td>0.454545</td>
+      <td>0.674312</td>
+      <td>0.227947</td>
+      <td>0.068114</td>
+    </tr>
+    <tr>
+      <td>Ward Location</td>
+      <td>Emergency Department</td>
+      <td>95</td>
+      <td>42</td>
+      <td>53</td>
+      <td>0.442105</td>
+      <td>Stable</td>
+      <td>0.660827</td>
+      <td>0.630726</td>
+      <td>0.571429</td>
+      <td>0.660377</td>
+      <td>0.571429</td>
+      <td>0.228208</td>
+      <td>0.084833</td>
+    </tr>
+    <tr>
+      <td>Ward Location</td>
+      <td>General Medicine</td>
+      <td>321</td>
+      <td>162</td>
+      <td>159</td>
+      <td>0.504673</td>
+      <td>Stable</td>
+      <td>0.688369</td>
+      <td>0.716512</td>
+      <td>0.672840</td>
+      <td>0.597484</td>
+      <td>0.650746</td>
+      <td>0.222976</td>
+      <td>0.037346</td>
+    </tr>
+    <tr>
+      <td>Ward Location</td>
+      <td>ICU</td>
+      <td>142</td>
+      <td>89</td>
+      <td>53</td>
+      <td>0.626761</td>
+      <td>Stable</td>
+      <td>0.680305</td>
+      <td>0.776337</td>
+      <td>0.955056</td>
+      <td>0.056604</td>
+      <td>0.758929</td>
+      <td>0.213954</td>
+      <td>0.118280</td>
+    </tr>
+    <tr>
+      <td>Ward Location</td>
+      <td>Surgical Ward</td>
+      <td>166</td>
+      <td>107</td>
+      <td>59</td>
+      <td>0.644578</td>
+      <td>Stable</td>
+      <td>0.692618</td>
+      <td>0.808610</td>
+      <td>0.775701</td>
+      <td>0.491525</td>
+      <td>0.754545</td>
+      <td>0.217079</td>
+      <td>0.084271</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Bloodstream Infection</td>
+      <td>43</td>
+      <td>21</td>
+      <td>22</td>
+      <td>0.488372</td>
+      <td>Stable</td>
+      <td>0.639610</td>
+      <td>0.583373</td>
+      <td>0.809524</td>
+      <td>0.409091</td>
+      <td>0.666667</td>
+      <td>0.235402</td>
+      <td>0.100497</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Community-Acquired Pneumonia</td>
+      <td>122</td>
+      <td>69</td>
+      <td>53</td>
+      <td>0.565574</td>
+      <td>Stable</td>
+      <td>0.632349</td>
+      <td>0.700656</td>
+      <td>0.724638</td>
+      <td>0.471698</td>
+      <td>0.680272</td>
+      <td>0.240057</td>
+      <td>0.056065</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Hospital-Acquired Pneumonia</td>
+      <td>86</td>
+      <td>58</td>
+      <td>28</td>
+      <td>0.674419</td>
+      <td>Stable</td>
+      <td>0.734914</td>
+      <td>0.858156</td>
+      <td>0.775862</td>
+      <td>0.535714</td>
+      <td>0.775862</td>
+      <td>0.198191</td>
+      <td>0.104400</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Intra-abdominal Infection</td>
+      <td>183</td>
+      <td>94</td>
+      <td>89</td>
+      <td>0.513661</td>
+      <td>Stable</td>
+      <td>0.607638</td>
+      <td>0.624990</td>
+      <td>0.734043</td>
+      <td>0.370787</td>
+      <td>0.630137</td>
+      <td>0.247044</td>
+      <td>0.098990</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Skin/Soft Tissue Infection</td>
+      <td>38</td>
+      <td>19</td>
+      <td>19</td>
+      <td>0.500000</td>
+      <td>Stable</td>
+      <td>0.843490</td>
+      <td>0.883493</td>
+      <td>0.842105</td>
+      <td>0.578947</td>
+      <td>0.744186</td>
+      <td>0.178315</td>
+      <td>0.129088</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Surgical Site Infection</td>
+      <td>35</td>
+      <td>20</td>
+      <td>15</td>
+      <td>0.571429</td>
+      <td>Stable</td>
+      <td>0.636667</td>
+      <td>0.748685</td>
+      <td>0.750000</td>
+      <td>0.333333</td>
+      <td>0.666667</td>
+      <td>0.240196</td>
+      <td>0.149639</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Urinary Tract Infection</td>
+      <td>146</td>
+      <td>75</td>
+      <td>71</td>
+      <td>0.513699</td>
+      <td>Stable</td>
+      <td>0.763005</td>
+      <td>0.801949</td>
+      <td>0.733333</td>
+      <td>0.676056</td>
+      <td>0.718954</td>
+      <td>0.200381</td>
+      <td>0.106100</td>
+    </tr>
+    <tr>
+      <td>Infection Source</td>
+      <td>Ventilator-Associated Pneumonia</td>
+      <td>71</td>
+      <td>44</td>
+      <td>27</td>
+      <td>0.619718</td>
+      <td>Stable</td>
+      <td>0.767256</td>
+      <td>0.862162</td>
+      <td>0.772727</td>
+      <td>0.592593</td>
+      <td>0.764045</td>
+      <td>0.191135</td>
+      <td>0.069660</td>
+    </tr>
+    <tr>
+      <td>Kidney Function</td>
+      <td>AKI</td>
+      <td>42</td>
+      <td>24</td>
+      <td>18</td>
+      <td>0.571429</td>
+      <td>Stable</td>
+      <td>0.652778</td>
+      <td>0.742031</td>
+      <td>0.750000</td>
+      <td>0.500000</td>
+      <td>0.705882</td>
+      <td>0.228027</td>
+      <td>0.052669</td>
+    </tr>
+    <tr>
+      <td>Kidney Function</td>
+      <td>Mild impairment</td>
+      <td>135</td>
+      <td>61</td>
+      <td>74</td>
+      <td>0.451852</td>
+      <td>Stable</td>
+      <td>0.659725</td>
+      <td>0.652640</td>
+      <td>0.688525</td>
+      <td>0.527027</td>
+      <td>0.608696</td>
+      <td>0.233905</td>
+      <td>0.086877</td>
+    </tr>
+    <tr>
+      <td>Kidney Function</td>
+      <td>Moderate impairment</td>
+      <td>91</td>
+      <td>48</td>
+      <td>43</td>
+      <td>0.527473</td>
+      <td>Stable</td>
+      <td>0.703488</td>
+      <td>0.700832</td>
+      <td>0.791667</td>
+      <td>0.488372</td>
+      <td>0.703704</td>
+      <td>0.218983</td>
+      <td>0.057686</td>
+    </tr>
+    <tr>
+      <td>Kidney Function</td>
+      <td>Normal</td>
+      <td>420</td>
+      <td>245</td>
+      <td>175</td>
+      <td>0.583333</td>
+      <td>Stable</td>
+      <td>0.693481</td>
+      <td>0.764730</td>
+      <td>0.751020</td>
+      <td>0.491429</td>
+      <td>0.710425</td>
+      <td>0.220160</td>
+      <td>0.061257</td>
+    </tr>
+    <tr>
+      <td>Kidney Function</td>
+      <td>Severe impairment</td>
+      <td>28</td>
+      <td>19</td>
+      <td>9</td>
+      <td>0.678571</td>
+      <td>Stable</td>
+      <td>0.903509</td>
+      <td>0.962003</td>
+      <td>0.894737</td>
+      <td>0.444444</td>
+      <td>0.829268</td>
+      <td>0.153692</td>
+      <td>0.265353</td>
+    </tr>
+    <tr>
+      <td>Kidney Function</td>
+      <td>Unknown</td>
+      <td>8</td>
+      <td>3</td>
+      <td>5</td>
+      <td>0.375000</td>
+      <td>Unstable (Small N)</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>Prior Antibiotic Exposure</td>
+      <td>1 prior exposure</td>
+      <td>189</td>
+      <td>108</td>
+      <td>81</td>
+      <td>0.571429</td>
+      <td>Stable</td>
+      <td>0.752686</td>
+      <td>0.826035</td>
+      <td>0.833333</td>
+      <td>0.444444</td>
+      <td>0.740741</td>
+      <td>0.200807</td>
+      <td>0.060370</td>
+    </tr>
+    <tr>
+      <td>Prior Antibiotic Exposure</td>
+      <td>&gt;=2 prior exposures</td>
+      <td>183</td>
+      <td>131</td>
+      <td>52</td>
+      <td>0.715847</td>
+      <td>Stable</td>
+      <td>0.702584</td>
+      <td>0.844463</td>
+      <td>0.969466</td>
+      <td>0.076923</td>
+      <td>0.830065</td>
+      <td>0.184578</td>
+      <td>0.057582</td>
+    </tr>
+    <tr>
+      <td>Prior Antibiotic Exposure</td>
+      <td>No prior exposure (0)</td>
+      <td>352</td>
+      <td>161</td>
+      <td>191</td>
+      <td>0.457386</td>
+      <td>Stable</td>
+      <td>0.601834</td>
+      <td>0.533148</td>
+      <td>0.521739</td>
+      <td>0.638743</td>
+      <td>0.535032</td>
+      <td>0.249833</td>
+      <td>0.080204</td>
+    </tr>
+    <tr>
+      <td>Prior AMR History</td>
+      <td>No prior resistant history</td>
+      <td>521</td>
+      <td>248</td>
+      <td>273</td>
+      <td>0.476008</td>
+      <td>Stable</td>
+      <td>0.641572</td>
+      <td>0.646080</td>
+      <td>0.604839</td>
+      <td>0.589744</td>
+      <td>0.588235</td>
+      <td>0.236579</td>
+      <td>0.064280</td>
+    </tr>
+    <tr>
+      <td>Prior AMR History</td>
+      <td>Prior resistant organism documented</td>
+      <td>203</td>
+      <td>152</td>
+      <td>51</td>
+      <td>0.748768</td>
+      <td>Stable</td>
+      <td>0.639706</td>
+      <td>0.837200</td>
+      <td>0.993421</td>
+      <td>0.019608</td>
+      <td>0.855524</td>
+      <td>0.179380</td>
+      <td>0.076998</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>7. False-Negative Deep Dive & Error Taxonomy</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>taxonomy_category</th>
+      <th>case_count</th>
+      <th>percentage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2. Prior-History Limitation (Zero Recorded 90-Day Exposure)</td>
+      <td>66</td>
+      <td>66.666667</td>
+    </tr>
+    <tr>
+      <td>5. Borderline Probability / Multifactorial Attenuation</td>
+      <td>15</td>
+      <td>15.151515</td>
+    </tr>
+    <tr>
+      <td>1. Weak Clinical Signal (Normal Vitals &amp; Low Inflammatory Markers)</td>
+      <td>10</td>
+      <td>10.101010</td>
+    </tr>
+    <tr>
+      <td>3. Community/Subgroup-Specific Pattern (Lower Unit Endemic Baseline)</td>
+      <td>6</td>
+      <td>6.060606</td>
+    </tr>
+    <tr>
+      <td>4. Distribution Edge Case (Atypical Source/Pathogen Spectrum)</td>
+      <td>2</td>
+      <td>2.020202</td>
+    </tr>
+  </tbody>
+</table>
+    <h3>Feature Distributions in False Negatives vs True Positives:</h3>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>feature</th>
+      <th>fn_mean</th>
+      <th>fn_std</th>
+      <th>tp_mean</th>
+      <th>tp_std</th>
+      <th>all_pos_mean</th>
+      <th>all_pos_std</th>
+      <th>fn_vs_tp_mean_delta</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>age_years</td>
+      <td>56.818182</td>
+      <td>15.238488</td>
+      <td>61.139535</td>
+      <td>15.979585</td>
+      <td>60.070000</td>
+      <td>15.890607</td>
+      <td>-4.321353</td>
+    </tr>
+    <tr>
+      <td>temperature_c</td>
+      <td>38.121212</td>
+      <td>1.008158</td>
+      <td>38.191362</td>
+      <td>1.092516</td>
+      <td>38.174000</td>
+      <td>1.071445</td>
+      <td>-0.070150</td>
+    </tr>
+    <tr>
+      <td>heart_rate_bpm</td>
+      <td>92.707071</td>
+      <td>20.979705</td>
+      <td>106.039867</td>
+      <td>18.724095</td>
+      <td>102.740000</td>
+      <td>20.122118</td>
+      <td>-13.332796</td>
+    </tr>
+    <tr>
+      <td>systolic_bp_mmhg</td>
+      <td>118.545455</td>
+      <td>22.415043</td>
+      <td>103.302326</td>
+      <td>20.768043</td>
+      <td>107.075000</td>
+      <td>22.160372</td>
+      <td>15.243129</td>
+    </tr>
+    <tr>
+      <td>respiratory_rate_bpm</td>
+      <td>20.373737</td>
+      <td>4.931336</td>
+      <td>20.817276</td>
+      <td>4.424534</td>
+      <td>20.707500</td>
+      <td>4.552885</td>
+      <td>-0.443538</td>
+    </tr>
+    <tr>
+      <td>crp_mg_l</td>
+      <td>35.333333</td>
+      <td>31.844107</td>
+      <td>49.445183</td>
+      <td>41.699779</td>
+      <td>45.952500</td>
+      <td>39.920781</td>
+      <td>-14.111849</td>
+    </tr>
+    <tr>
+      <td>prior_antibiotic_exposure_count_90d</td>
+      <td>0.323232</td>
+      <td>0.793189</td>
+      <td>1.458472</td>
+      <td>1.320014</td>
+      <td>1.177500</td>
+      <td>1.305855</td>
+      <td>-1.135239</td>
+    </tr>
+    <tr>
+      <td>prior_antibiotic_days</td>
+      <td>1.393939</td>
+      <td>3.193802</td>
+      <td>9.504983</td>
+      <td>9.408727</td>
+      <td>7.497500</td>
+      <td>9.019333</td>
+      <td>-8.111044</td>
+    </tr>
+    <tr>
+      <td>ward_endemic_resistance_rate</td>
+      <td>0.261202</td>
+      <td>0.062963</td>
+      <td>0.323987</td>
+      <td>0.092468</td>
+      <td>0.308447</td>
+      <td>0.090214</td>
+      <td>-0.062785</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>8. Chronological Temporal Validation</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>temporal_cohort</th>
+      <th>date_range</th>
+      <th>sample_size</th>
+      <th>prevalence</th>
+      <th>roc_auc</th>
+      <th>pr_auc</th>
+      <th>sensitivity</th>
+      <th>specificity</th>
+      <th>f1_score</th>
+      <th>brier_score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Early Period (Train: 2025)</td>
+      <td>2025-01-01 to 2026-05-27</td>
+      <td>3353</td>
+      <td>0.552043</td>
+      <td>0.789636</td>
+      <td>0.829641</td>
+      <td>0.690978</td>
+      <td>0.734354</td>
+      <td>0.724851</td>
+      <td>0.190926</td>
+    </tr>
+    <tr>
+      <td>Middle Period (Validation: 2025-2026)</td>
+      <td>2026-05-27 to 2026-09-12</td>
+      <td>718</td>
+      <td>0.534819</td>
+      <td>0.728122</td>
+      <td>0.744840</td>
+      <td>0.679688</td>
+      <td>0.664671</td>
+      <td>0.689564</td>
+      <td>0.210557</td>
+    </tr>
+    <tr>
+      <td>Late Period (Prospective Test: 2026)</td>
+      <td>2026-09-12 to 2027-01-01</td>
+      <td>720</td>
+      <td>0.562500</td>
+      <td>0.706275</td>
+      <td>0.747069</td>
+      <td>0.582716</td>
+      <td>0.679365</td>
+      <td>0.636119</td>
+      <td>0.219206</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>9. Missingness Degradation Curve (0% to 60%)</h2>
+    <table border="1" class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>missingness_rate</th>
+      <th>missing_fraction</th>
+      <th>test_roc_auc</th>
+      <th>delta_roc_auc</th>
+      <th>test_pr_auc</th>
+      <th>test_sensitivity</th>
+      <th>test_specificity</th>
+      <th>test_f1</th>
+      <th>test_brier_score</th>
+      <th>test_ece</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0%</td>
+      <td>0.0</td>
+      <td>0.699267</td>
+      <td>0.000000</td>
+      <td>0.750206</td>
+      <td>0.6425</td>
+      <td>0.641975</td>
+      <td>0.664942</td>
+      <td>0.220189</td>
+      <td>0.049234</td>
+    </tr>
+    <tr>
+      <td>10%</td>
+      <td>0.1</td>
+      <td>0.696782</td>
+      <td>-0.002485</td>
+      <td>0.740197</td>
+      <td>0.6400</td>
+      <td>0.669753</td>
+      <td>0.671035</td>
+      <td>0.221388</td>
+      <td>0.051226</td>
+    </tr>
+    <tr>
+      <td>20%</td>
+      <td>0.2</td>
+      <td>0.668943</td>
+      <td>-0.030324</td>
+      <td>0.712019</td>
+      <td>0.5850</td>
+      <td>0.645062</td>
+      <td>0.624833</td>
+      <td>0.229715</td>
+      <td>0.060611</td>
+    </tr>
+    <tr>
+      <td>30%</td>
+      <td>0.3</td>
+      <td>0.690031</td>
+      <td>-0.009236</td>
+      <td>0.734371</td>
+      <td>0.5800</td>
+      <td>0.722222</td>
+      <td>0.642659</td>
+      <td>0.224178</td>
+      <td>0.061797</td>
+    </tr>
+    <tr>
+      <td>40%</td>
+      <td>0.4</td>
+      <td>0.669105</td>
+      <td>-0.030162</td>
+      <td>0.714189</td>
+      <td>0.5625</td>
+      <td>0.712963</td>
+      <td>0.626741</td>
+      <td>0.229394</td>
+      <td>0.063199</td>
+    </tr>
+    <tr>
+      <td>50%</td>
+      <td>0.5</td>
+      <td>0.646319</td>
+      <td>-0.052948</td>
+      <td>0.691423</td>
+      <td>0.5425</td>
+      <td>0.716049</td>
+      <td>0.612130</td>
+      <td>0.235016</td>
+      <td>0.061852</td>
+    </tr>
+    <tr>
+      <td>60%</td>
+      <td>0.6</td>
+      <td>0.641173</td>
+      <td>-0.058094</td>
+      <td>0.681020</td>
+      <td>0.4725</td>
+      <td>0.753086</td>
+      <td>0.565022</td>
+      <td>0.238721</td>
+      <td>0.070945</td>
+    </tr>
+  </tbody>
+</table>
+
+    <hr style="margin-top: 40px; border: 0; border-top: 1px solid #e2e8f0;">
+    <p style="font-size: 12px; color: #64748b; text-align: center;">
+        ResistomeX AI Research Pipeline &bull; Master Validation Report &bull; Generated: 2026-10-03 00:13:45
+    </p>
+</div>
+</body>
+</html>

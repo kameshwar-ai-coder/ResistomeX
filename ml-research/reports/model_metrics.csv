@@ -1,0 +1,7 @@
+metric,value
+roc_auc,0.7011574074074074
+pr_auc,0.7503569004584737
+brier_score,0.21965082852449844
+log_loss,0.6289541643949479
+expected_calibration_error,0.04754464278892915
+default_metrics_0_5,"{""threshold"": 0.5, ""tp"": 263, ""tn"": 210, ""fp"": 114, ""fn"": 137, ""sensitivity"": 0.6575, ""specificity"": 0.6481481481481481, ""ppv"": 0.6976127320954907, ""npv"": 0.6051873198847262, ""f1"": 0.676962676962677, ""balanced_accuracy"": 0.6528240740740741}"

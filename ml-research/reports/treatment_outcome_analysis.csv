@@ -1,0 +1,5 @@
+doctor_decision,encounter_count,improved_count,improved_pct,failure_count,failure_pct,deterioration_count,deterioration_pct,clinical_caveat
+Modify,1978,1016,51.4,0,0.0,0,0.0,OBSERVATIONAL ASSOCIATION ONLY — NOT CAUSAL EVIDENCE
+Accept,6461,3285,50.8,0,0.0,0,0.0,OBSERVATIONAL ASSOCIATION ONLY — NOT CAUSAL EVIDENCE
+Override,1087,593,54.6,0,0.0,0,0.0,OBSERVATIONAL ASSOCIATION ONLY — NOT CAUSAL EVIDENCE
+Pending,474,241,50.8,0,0.0,0,0.0,OBSERVATIONAL ASSOCIATION ONLY — NOT CAUSAL EVIDENCE

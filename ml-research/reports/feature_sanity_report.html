@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ResistomeX Phase 2 — Feature Sanity & Importance Consistency Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0f172a; }
+        h1 { border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+        th { background: #f1f5f9; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .badge-clean { background: #dcfce7; color: #166534; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ResistomeX Phase 2 — Feature Sanity & Importance Consistency</h1>
+    <p>Comprehensive audit of candidate clinical features, distributional shifts across AMR target status, and permutation importance.</p>
+
+    <h2>1. Top Feature Distributions: AMR Positive vs AMR Negative</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>AMR Positive (Mean ± Std)</th>
+                <th>AMR Positive Median [IQR]</th>
+                <th>AMR Negative (Mean ± Std)</th>
+                <th>AMR Negative Median [IQR]</th>
+                <th>Mann-Whitney p-value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>age_years</strong></td>
+                <td>59.43 ± 16.54</td>
+                <td>59.00 [48.00 - 71.00]</td>
+                <td>57.04 ± 17.02</td>
+                <td>57.00 [45.00 - 70.00]</td>
+                <td>2.25e-06</td>
+            </tr>
+            <tr>
+                <td><strong>temperature_c</strong></td>
+                <td>38.18 ± 1.03</td>
+                <td>38.40 [37.70 - 38.90]</td>
+                <td>38.15 ± 1.02</td>
+                <td>38.40 [37.50 - 38.90]</td>
+                <td>1.66e-01</td>
+            </tr>
+            <tr>
+                <td><strong>heart_rate_bpm</strong></td>
+                <td>102.90 ± 20.07</td>
+                <td>105.00 [89.00 - 117.00]</td>
+                <td>97.18 ± 20.47</td>
+                <td>96.00 [82.00 - 112.00]</td>
+                <td>2.00e-22</td>
+            </tr>
+            <tr>
+                <td><strong>systolic_bp_mmhg</strong></td>
+                <td>107.20 ± 22.05</td>
+                <td>105.00 [91.00 - 123.00]</td>
+                <td>113.41 ± 22.06</td>
+                <td>114.00 [96.00 - 130.00]</td>
+                <td>2.47e-22</td>
+            </tr>
+            <tr>
+                <td><strong>diastolic_bp_mmhg</strong></td>
+                <td>63.72 ± 14.36</td>
+                <td>63.00 [53.00 - 74.00]</td>
+                <td>67.58 ± 14.51</td>
+                <td>68.00 [57.00 - 78.00]</td>
+                <td>9.25e-20</td>
+            </tr>
+            <tr>
+                <td><strong>spo2_percent</strong></td>
+                <td>92.75 ± 3.83</td>
+                <td>93.00 [90.00 - 96.00]</td>
+                <td>93.25 ± 3.71</td>
+                <td>94.00 [91.00 - 96.00]</td>
+                <td>1.51e-06</td>
+            </tr>
+            <tr>
+                <td><strong>respiratory_rate_bpm</strong></td>
+                <td>20.84 ± 4.72</td>
+                <td>20.00 [17.00 - 24.00]</td>
+                <td>20.17 ± 4.59</td>
+                <td>20.00 [17.00 - 23.00]</td>
+                <td>5.32e-07</td>
+            </tr>
+            <tr>
+                <td><strong>crp_mg_l</strong></td>
+                <td>45.29 ± 41.78</td>
+                <td>32.60 [18.00 - 58.00]</td>
+                <td>35.65 ± 33.97</td>
+                <td>25.40 [14.40 - 44.80]</td>
+                <td>6.52e-22</td>
+            </tr>
+            <tr>
+                <td><strong>ward_endemic_resistance_rate</strong></td>
+                <td>0.30 ± 0.10</td>
+                <td>0.29 [0.23 - 0.37]</td>
+                <td>0.28 ± 0.09</td>
+                <td>0.27 [0.22 - 0.33]</td>
+                <td>8.82e-23</td>
+            </tr>
+            <tr>
+                <td><strong>prior_antibiotic_days</strong></td>
+                <td>8.10 ± 9.29</td>
+                <td>5.00 [0.00 - 14.00]</td>
+                <td>4.76 ± 7.74</td>
+                <td>0.00 [0.00 - 7.00]</td>
+                <td>9.76e-50</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Feature Importance Consistency (Permutation vs XGBoost Gain)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Engineered Feature Name</th>
+                <th>Permutation AUC Drop (Mean ± Std)</th>
+                <th>XGBoost Split Gain</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>feat_prior_amr_history</code></td>
+                <td>0.0804 ± 0.0124</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>prior_antibiotic_exposure_count_90d</code></td>
+                <td>0.0233 ± 0.0073</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>ward_endemic_resistance_rate</code></td>
+                <td>0.0077 ± 0.0044</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>prior_antibiotic_days</code></td>
+                <td>0.0076 ± 0.0033</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>age_years</code></td>
+                <td>0.0071 ± 0.0039</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>feat_shock_index</code></td>
+                <td>0.0027 ± 0.0022</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>crp_mg_l</code></td>
+                <td>0.0025 ± 0.0020</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>infection_source_Hospital-Acquired Pneumonia</code></td>
+                <td>0.0018 ± 0.0017</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>systolic_bp_mmhg</code></td>
+                <td>0.0018 ± 0.0009</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>prior_antibiotic_90d_None prior</code></td>
+                <td>0.0015 ± 0.0010</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>ward_Surgical Ward</code></td>
+                <td>0.0012 ± 0.0005</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>feat_pulse_pressure</code></td>
+                <td>0.0010 ± 0.0006</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>prior_resistant_organism_None known</code></td>
+                <td>0.0009 ± 0.0006</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>ward_General Medicine</code></td>
+                <td>0.0008 ± 0.0011</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>kidney_function_Mild impairment</code></td>
+                <td>0.0008 ± 0.0005</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>primary_diagnosis_Urosepsis</code></td>
+                <td>0.0005 ± 0.0002</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>comorb_ckd</code></td>
+                <td>0.0004 ± 0.0008</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>spo2_percent</code></td>
+                <td>0.0003 ± 0.0012</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>feat_prior_abx_ge2</code></td>
+                <td>0.0003 ± 0.0001</td>
+                <td>0.00</td>
+            </tr>
+            <tr>
+                <td><code>suspected_pathogen_K. pneumoniae</code></td>
+                <td>0.0003 ± 0.0006</td>
+                <td>0.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Complete Clinical Feature Sanity Audit</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Feature Name</th>
+                <th>Type</th>
+                <th>Missing %</th>
+                <th>Summary Distribution</th>
+                <th>Target Association</th>
+                <th>Leakage Status</th>
+                <th>Clinical Plausibility</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>age_years</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=58.4, std=16.8, median=58.0</td>
+                <td>r=+0.071 (p=9.58e-07)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Older patients frequently present with higher cumulative healthcare exposures, immunosenescence, and colonization risk.</small></td>
+            </tr>
+            <tr>
+                <td><strong>temperature_c</strong></td>
+                <td>float64</td>
+                <td>0.0%</td>
+                <td>mean=38.2, std=1.0, median=38.4</td>
+                <td>r=+0.016 (p=2.73e-01)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Fever indicates systemic inflammatory response and acute infection severity.</small></td>
+            </tr>
+            <tr>
+                <td><strong>heart_rate_bpm</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=100.3, std=20.4, median=101.0</td>
+                <td>r=+0.139 (p=4.10e-22)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Tachycardia is a core SIRS/sepsis vital sign indicating physiological distress.</small></td>
+            </tr>
+            <tr>
+                <td><strong>systolic_bp_mmhg</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=110.0, std=22.3, median=109.0</td>
+                <td>r=-0.139 (p=5.54e-22)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Hypotension signals septic shock, organ hypoperfusion, and severe sepsis.</small></td>
+            </tr>
+            <tr>
+                <td><strong>diastolic_bp_mmhg</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=65.5, std=14.5, median=65.0</td>
+                <td>r=-0.132 (p=5.09e-20)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Diastolic pressure reflects systemic vascular resistance during acute infection.</small></td>
+            </tr>
+            <tr>
+                <td><strong>spo2_percent</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=93.0, std=3.8, median=94.0</td>
+                <td>r=-0.066 (p=4.74e-06)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Hypoxemia correlates with severe lower respiratory infection and pulmonary compromise.</small></td>
+            </tr>
+            <tr>
+                <td><strong>respiratory_rate_bpm</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=20.5, std=4.7, median=20.0</td>
+                <td>r=+0.071 (p=7.49e-07)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Tachypnea is a sensitive early marker for metabolic acidosis and sepsis.</small></td>
+            </tr>
+            <tr>
+                <td><strong>crp_mg_l</strong></td>
+                <td>float64</td>
+                <td>0.0%</td>
+                <td>mean=41.0, std=38.8, median=29.4</td>
+                <td>r=+0.124 (p=8.08e-18)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>C-reactive protein measures acute phase hepatic inflammatory synthesis.</small></td>
+            </tr>
+            <tr>
+                <td><strong>prior_antibiotic_exposure_count_90d</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=1.0, std=1.2, median=1.0</td>
+                <td>r=+0.193 (p=1.35e-41)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Prior antimicrobial exposure exerts selective pressure favoring resistant bacterial clones.</small></td>
+            </tr>
+            <tr>
+                <td><strong>prior_antibiotic_days</strong></td>
+                <td>int64</td>
+                <td>0.0%</td>
+                <td>mean=6.6, std=8.8, median=3.0</td>
+                <td>r=+0.189 (p=9.58e-40)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Duration of prior antimicrobial therapy directly correlates with microbiome dysbiosis and resistance emergence.</small></td>
+            </tr>
+            <tr>
+                <td><strong>ward_endemic_resistance_rate</strong></td>
+                <td>float64</td>
+                <td>0.0%</td>
+                <td>mean=0.3, std=0.1, median=0.3</td>
+                <td>r=+0.147 (p=2.01e-24)</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Local institutional antibiograms and unit-level colonization pressure heavily influence empiric AMR odds.</small></td>
+            </tr>
+            <tr>
+                <td><strong>sex</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: Male (2 cats)</td>
+                <td>2 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Demographic baseline with known epidemiological differences in UTI and bacteremia pathogen distributions.</small></td>
+            </tr>
+            <tr>
+                <td><strong>pregnancy_status</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: Not applicable (4 cats)</td>
+                <td>4 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Guides antimicrobial selection safety (e.g. avoiding fluoroquinolones, tetracyclines).</small></td>
+            </tr>
+            <tr>
+                <td><strong>ward</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: General Medicine (4 cats)</td>
+                <td>4 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Hospital care location proxy for acuity and nosocomial pathogen exposure (ICU vs General Ward).</small></td>
+            </tr>
+            <tr>
+                <td><strong>primary_diagnosis</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: Aspiration pneumonia (26 cats)</td>
+                <td>26 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Syndromic presentation context guiding diagnostic focus.</small></td>
+            </tr>
+            <tr>
+                <td><strong>infection_source</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: Intra-abdominal Infection (8 cats)</td>
+                <td>8 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Anatomical site of infection strongly dictates likely pathogen spectrum and expected resistance phenotypes.</small></td>
+            </tr>
+            <tr>
+                <td><strong>suspected_pathogen</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: Enterococcus faecalis (9 cats)</td>
+                <td>9 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Clinical microbiological suspicion prior to definitive culture confirmation.</small></td>
+            </tr>
+            <tr>
+                <td><strong>kidney_function</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: Normal (6 cats)</td>
+                <td>6 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Crucial for safe dosing and drug clearance adjustments.</small></td>
+            </tr>
+            <tr>
+                <td><strong>liver_function</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: Normal (5 cats)</td>
+                <td>5 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Hepatic safety filter for hepatically metabolized antimicrobials.</small></td>
+            </tr>
+            <tr>
+                <td><strong>drug_allergy</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: None known (7 cats)</td>
+                <td>7 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Patient safety contraindication filter.</small></td>
+            </tr>
+            <tr>
+                <td><strong>allergy_severity</strong></td>
+                <td>str</td>
+                <td>70.8%</td>
+                <td>Top: Mild/rash (3 cats)</td>
+                <td>3 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Guides risk-benefit assessment for cross-reactivity.</small></td>
+            </tr>
+            <tr>
+                <td><strong>prior_antibiotic_90d</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: None in prior 90 days (13 cats)</td>
+                <td>13 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Specific drug classes previously taken drive class-specific resistance mechanisms.</small></td>
+            </tr>
+            <tr>
+                <td><strong>prior_resistant_organism</strong></td>
+                <td>str</td>
+                <td>0.0%</td>
+                <td>Top: None known (5 cats)</td>
+                <td>5 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Previous colonization or infection with resistant pathogen is the single strongest clinical predictor of recurrence.</small></td>
+            </tr>
+            <tr>
+                <td><strong>comorbidities</strong></td>
+                <td>str</td>
+                <td>32.0%</td>
+                <td>Top: Immunosuppression (92 cats)</td>
+                <td>92 categories</td>
+                <td><span class="badge-clean">Clean (Approved)</span></td>
+                <td><small>Chronic conditions (CKD, Diabetes, COPD) impair host defense and increase healthcare contact frequency.</small></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

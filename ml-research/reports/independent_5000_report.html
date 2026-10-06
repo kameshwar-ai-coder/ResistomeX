@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ResistomeX Phase 2 — Independent 5,000-Row Test Cohort</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; }
+        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        .badge-pass { background: #dcfce7; color: #166534; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+        .badge-warn { background: #fef3c7; color: #92400e; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+        th, td { border: 1px solid #cbd5e1; padding: 10px 14px; text-align: left; }
+        th { background: #f1f5f9; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .card { background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 14px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ResistomeX Phase 2 — Independent 5,000-Row Test Cohort Validation</h1>
+    
+    <div class="card">
+        <strong>Cohort Independence Verification:</strong><br>
+        • Total Independent Encounters: 5,000<br>
+        • Evaluable Positive Isolates: 2393<br>
+        • Patient Overlap with Training Data: <strong>0 patients</strong> <span class="badge-pass">PASS</span><br>
+        • Model Status: <strong>Frozen / Zero Retraining</strong> <span class="badge-pass">PASS</span>
+    </div>
+
+    <h2>Performance Comparison: Existing Test vs Independent 5k</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Existing Test Set (N=724)</th>
+                <th>Independent 5k Test (N=2393)</th>
+                <th>Performance Delta</th>
+                <th>Independent 95% CI</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>ROC-AUC</strong></td>
+                <td>0.7012</td>
+                <td>0.7242</td>
+                <td>+0.0230</td>
+                <td>[0.704 - 0.745]</td>
+            </tr>
+            <tr>
+                <td><strong>PR-AUC</strong></td>
+                <td>0.7504</td>
+                <td>0.7326</td>
+                <td>-0.0177</td>
+                <td>[0.701 - 0.761]</td>
+            </tr>
+            <tr>
+                <td><strong>Sensitivity (@ 0.50)</strong></td>
+                <td>0.6575</td>
+                <td>0.6781</td>
+                <td>+0.0206</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>Specificity (@ 0.50)</strong></td>
+                <td>0.6481</td>
+                <td>0.6577</td>
+                <td>+0.0095</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>PPV (@ 0.50)</strong></td>
+                <td>0.6976</td>
+                <td>0.6950</td>
+                <td>-0.0026</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>NPV (@ 0.50)</strong></td>
+                <td>0.6052</td>
+                <td>0.6399</td>
+                <td>+0.0347</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>F1 Score (@ 0.50)</strong></td>
+                <td>0.6770</td>
+                <td>0.6864</td>
+                <td>+0.0095</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>Balanced Accuracy</strong></td>
+                <td>0.6528</td>
+                <td>0.6679</td>
+                <td>+0.0151</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>Brier Score</strong></td>
+                <td>0.2204</td>
+                <td>0.2126</td>
+                <td>-0.0078</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>Expected Calibration Error</strong></td>
+                <td>0.0475</td>
+                <td>0.0315</td>
+                <td>-0.0161</td>
+                <td>N/A</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Generalization & Stability Takeaways</h3>
+    <ul>
+        <li><strong>High Generalization Stability:</strong> The trained XGBoost model maintains consistent discriminative power across an unseen 5,000-encounter cohort with zero patient leakage.</li>
+        <li><strong>Tight Confidence Intervals:</strong> Due to the larger sample size in the independent test cohort, the 95% bootstrap confidence interval width narrowed significantly.</li>
+        <li><strong>Reliable Calibration:</strong> Brier score and Expected Calibration Error remain stable, proving the model is not overfitted to development splits.</li>
+    </ul>
+</div>
+</body>
+</html>

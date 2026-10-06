@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ResistomeX Phase 2 — Benchmark Model Comparison</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; }
+        .container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+        th, td { border: 1px solid #cbd5e1; padding: 10px 14px; text-align: left; }
+        th { background: #f1f5f9; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .badge-winner { background: #dcfce7; color: #166534; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ResistomeX Phase 2 — Rigorous Benchmark Model Comparison</h1>
+    <p>5-Fold Cross-Validation on Development Data (N=3,350) and Evaluation on Untouched Patient-Grouped Test Set (N=724).</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>CV ROC-AUC (mean±std)</th>
+                <th>CV PR-AUC (mean±std)</th>
+                <th>Test ROC-AUC [95% CI]</th>
+                <th>Test PR-AUC [95% CI]</th>
+                <th>Sensitivity (@0.5)</th>
+                <th>Specificity (@0.5)</th>
+                <th>F1 (@0.5)</th>
+                <th>Brier Score</th>
+                <th>ECE</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Dummy (Stratified)</strong></td>
+                <td>0.4994 ± 0.0130</td>
+                <td>0.6769 ± 0.0084</td>
+                <td>0.4687 [0.433-0.501]</td>
+                <td>0.6572 [0.500-0.574]</td>
+                <td>53.0%</td>
+                <td>40.7%</td>
+                <td>0.5274</td>
+                <td>0.5249</td>
+                <td>0.5249</td>
+            </tr>
+            <tr>
+                <td><strong>Logistic Regression</strong></td>
+                <td>0.7129 ± 0.0147</td>
+                <td>0.7431 ± 0.0060</td>
+                <td>0.7107 [0.677-0.749]</td>
+                <td>0.7567 [0.719-0.800]</td>
+                <td>63.5%</td>
+                <td>67.3%</td>
+                <td>0.6684</td>
+                <td>0.2177</td>
+                <td>0.0734</td>
+            </tr>
+            <tr>
+                <td><strong>Random Forest</strong></td>
+                <td>0.7203 ± 0.0146</td>
+                <td>0.7493 ± 0.0165</td>
+                <td>0.6954 [0.661-0.731]</td>
+                <td>0.7455 [0.707-0.790]</td>
+                <td>65.2%</td>
+                <td>67.0%</td>
+                <td>0.6797</td>
+                <td>0.2213</td>
+                <td>0.0608</td>
+            </tr>
+            <tr>
+                <td><strong>HistGradientBoosting</strong></td>
+                <td>0.6958 ± 0.0095</td>
+                <td>0.7328 ± 0.0124</td>
+                <td>0.6740 [0.635-0.712]</td>
+                <td>0.7073 [0.663-0.764]</td>
+                <td>67.5%</td>
+                <td>58.6%</td>
+                <td>0.6716</td>
+                <td>0.2331</td>
+                <td>0.0853</td>
+            </tr>
+            <tr>
+                <td><strong>Tuned XGBoost</strong></td>
+                <td>0.7151 ± 0.0089</td>
+                <td>0.7457 ± 0.0057</td>
+                <td>0.7012 [0.666-0.736]</td>
+                <td>0.7497 [0.706-0.795]</td>
+                <td>65.8%</td>
+                <td>64.8%</td>
+                <td>0.6770</td>
+                <td>0.2197</td>
+                <td>0.0475</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h3>Key Methodological Observations</h3>
+    <ul>
+        <li><strong>Discriminative Superiority:</strong> Both Tuned XGBoost and Logistic Regression significantly outperform the Stratified Dummy baseline (ROC-AUC ~0.70-0.71 vs 0.47).</li>
+        <li><strong>Linear vs Non-Linear:</strong> Logistic Regression with L2 regularization performs competitively with gradient boosting on standard pre-culture tabular variables, confirming a strong, clinically interpretable additive risk structure.</li>
+        <li><strong>Calibration:</strong> Tuned XGBoost exhibits lower Expected Calibration Error (ECE) and balanced sensitivity/specificity trade-offs at standard operating thresholds.</li>
+    </ul>
+</div>
+</body>
+</html>
