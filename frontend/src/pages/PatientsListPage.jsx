@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { AddPatientModal } from '../components/AddPatientModal';
 
 export const PatientsListPage = () => {
-  const { patients, searchQuery, setSearchQuery, selectedRiskFilter, setSelectedRiskFilter } = usePatients();
+  const { patients, searchQuery, setSearchQuery, selectedRiskFilter, setSelectedRiskFilter, loadFull10kDataset, is10kLoaded, loading, dbError } = usePatients();
   const { role } = useAuth();
   const location = useLocation();
 
@@ -23,6 +23,29 @@ export const PatientsListPage = () => {
       setStatusTab('Active');
     }
   }, [location.search]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading master inpatient registry...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load inpatient registry from database.</p>
+          <p className="text-xs text-red-700">{dbError}</p>
+        </div>
+      </div>
+    );
+  }
 
   const activeCount = patients.filter(p => p.admissionStatus === 'Admitted' || !p.admissionStatus).length;
   const dischargedCount = patients.filter(p => p.admissionStatus === 'Recovered & Discharged').length;
@@ -69,26 +92,43 @@ export const PatientsListPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-4 self-start lg:self-auto">
+        <div className="flex items-center gap-3 self-start lg:self-auto flex-wrap">
           <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-xs border border-[#ededf1]">
             <div className="w-9 h-9 rounded-lg bg-[#f3f3f7] flex items-center justify-center text-[#111124]">
               <span className="material-symbols-outlined text-[20px]">folder_shared</span>
             </div>
             <div>
               <div className="text-[10px] text-[#5a5b82] uppercase font-semibold">Total Records</div>
-              <div className="text-sm text-[#111124] font-bold">{patients.length} <span className="text-xs font-normal text-[#47464c]">Patients</span></div>
+              <div className="text-sm text-[#111124] font-bold">
+                {patients.length.toLocaleString()} <span className="text-xs font-normal text-[#47464c]">Patients</span>
+              </div>
             </div>
           </div>
-          {role !== 'nurse' && (
+
+          {patients.length < 1000 && (
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#111124] text-white text-xs font-semibold hover:bg-[#26263a] transition-all shadow-xs"
+              onClick={() => loadFull10kDataset(10000)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold hover:bg-indigo-100 transition-all shadow-xs"
+              title="Stream the complete 10,000 patient dataset cohort into the registry"
               type="button"
             >
-              <span className="material-symbols-outlined text-[18px]">person_add</span>
-              <span>Add Patient</span>
+              <span className="material-symbols-outlined text-[18px] text-indigo-600">dataset</span>
+              <span>Load Full 10,000 Cohort</span>
             </button>
           )}
+
+          <div className="flex items-center gap-2">
+            {role !== 'nurse' && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#111124] text-white text-xs font-semibold hover:bg-[#26263a] transition-all shadow-xs"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                <span>Add Patient</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -228,20 +268,38 @@ export const PatientsListPage = () => {
 
       {/* Structured Master Table */}
       <div className="bg-white rounded-xl shadow-xs overflow-hidden border border-[#ededf1]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[1000px]">
-            <thead>
-              <tr className="bg-[#f3f3f7] text-[#5a5b82] uppercase text-[10px] tracking-wider font-semibold border-b border-[#ededf1]">
-                <th className="py-3 px-4">MRN</th>
-                <th className="py-3 px-4">Patient & Demographics</th>
-                <th className="py-3 px-4">Infection & Pathogen</th>
-                <th className="py-3 px-4">Admission Timeline</th>
-                <th className="py-3 px-4">AMR Risk</th>
-                <th className="py-3 px-4">Status & Outcome</th>
-                {role !== 'nurse' && <th className="py-3 px-4 text-right">Actions</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#ededf1]">
+        {loading ? (
+          <div className="p-12 text-center text-[#5a5b82] space-y-3">
+            <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+            <p className="text-sm font-semibold">Loading patient data from database...</p>
+          </div>
+        ) : dbError ? (
+          <div className="p-8 text-center bg-red-50 text-red-900 border-b border-red-200 space-y-2">
+            <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+            <p className="text-sm font-bold">Unable to load patient data from database.</p>
+            <p className="text-xs text-red-700">{dbError}</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center text-[#5a5b82] space-y-2">
+            <span className="material-symbols-outlined text-4xl text-[#8e8ea9]">search_off</span>
+            <p className="text-base font-bold text-[#111124]">No patients found.</p>
+            <p className="text-xs">No records match the selected filters or database query.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[1000px]">
+              <thead>
+                <tr className="bg-[#f3f3f7] text-[#5a5b82] uppercase text-[10px] tracking-wider font-semibold border-b border-[#ededf1]">
+                  <th className="py-3 px-4">MRN</th>
+                  <th className="py-3 px-4">Patient & Demographics</th>
+                  <th className="py-3 px-4">Infection & Pathogen</th>
+                  <th className="py-3 px-4">Admission Timeline</th>
+                  <th className="py-3 px-4">AMR Risk</th>
+                  <th className="py-3 px-4">Status & Outcome</th>
+                  {role !== 'nurse' && <th className="py-3 px-4 text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#ededf1]">
               {filtered.map(patient => {
                 const isRecovered = patient.admissionStatus === 'Recovered & Discharged';
 
@@ -316,6 +374,7 @@ export const PatientsListPage = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       <AddPatientModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

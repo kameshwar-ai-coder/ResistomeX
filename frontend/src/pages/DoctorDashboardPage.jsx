@@ -4,21 +4,44 @@ import { usePatients } from '../context/PatientContext';
 import { AddPatientModal } from '../components/AddPatientModal';
 
 export const DoctorDashboardPage = () => {
-  const { patients } = usePatients();
+  const { patients, loading, dbError } = usePatients();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('All');
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading active inpatient worklist...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load patient records from database.</p>
+          <p className="text-xs text-red-700">{dbError}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Active hospitalized patients only
   const activePatients = patients.filter(p => p.admissionStatus === 'Admitted' || !p.admissionStatus);
 
   const activeCount = activePatients.length;
   const highRiskCount = activePatients.filter(p => p.amrRiskLevel === 'High').length;
-  const awaitingCulturesCount = activePatients.filter(p => p.cultureResult.status.includes('Pending') || p.cultureResult.status.includes('Progress')).length;
-  const actionsNeededCount = activePatients.filter(p => p.status.includes('Review') || p.status.includes('Priority')).length;
+  const awaitingCulturesCount = activePatients.filter(p => (p.cultureResult?.status || '').includes('Pending') || (p.cultureResult?.status || '').includes('Progress')).length;
+  const actionsNeededCount = activePatients.filter(p => (p.status || '').includes('Review') || (p.status || '').includes('Priority')).length;
 
   const filteredPatients = activePatients.filter(p => {
     if (activeFilter === 'High Risk') return p.amrRiskLevel === 'High';
-    if (activeFilter === 'ICU Only') return p.ward.includes('ICU');
+    if (activeFilter === 'ICU Only') return (p.ward || '').includes('ICU');
     return true;
   });
 
@@ -35,7 +58,7 @@ export const DoctorDashboardPage = () => {
           className="bg-[#111124] hover:bg-[#26263a] text-white text-xs px-4 py-2 rounded font-semibold transition-colors shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
         >
           <span className="material-symbols-outlined text-[18px]">person_add</span>
-          <span>New AMR Assessment</span>
+          <span>Add Patient</span>
         </button>
       </div>
 
@@ -150,11 +173,11 @@ export const DoctorDashboardPage = () => {
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                   patient.amrRiskLevel === 'High' ? 'bg-[#ffdad6] text-[#ba1a1a]' : 'bg-[#e2e0fb] text-[#111124]'
                 }`}>
-                  {patient.name.split(' ').map(n => n[0]).join('')}
+                  {(patient.name || 'PT').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT'}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-[#111124] font-semibold">{patient.name}</span>
+                    <span className="text-sm text-[#111124] font-semibold">{patient.name || 'Patient'}</span>
                     <span className="text-xs text-[#5a5b82] font-medium">{patient.age}y</span>
                     <span className="text-xs font-mono text-[#5a5b82]">{patient.mrn}</span>
                     <span className="px-2 py-0.5 rounded text-[11px] bg-[#ededf1] text-[#1a1c1f] font-medium">{patient.bed}</span>

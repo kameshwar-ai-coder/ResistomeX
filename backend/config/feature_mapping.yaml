@@ -1,0 +1,81 @@
+# ResistomeX Feature Mapping Specification
+# Defines pre-culture features, target fields, leakage columns, and metadata
+
+metadata_columns:
+  - patient_id
+  - encounter_id
+  - synthetic_record
+  - patient_name
+  - bed
+  - patient_status
+  - admission_datetime
+
+numeric_features:
+  - age_years
+  - temperature_c
+  - heart_rate_bpm
+  - systolic_bp_mmhg
+  - diastolic_bp_mmhg
+  - spo2_percent
+  - respiratory_rate_bpm
+  - crp_mg_l
+  - prior_antibiotic_exposure_count_90d
+  - prior_antibiotic_days
+  - ward_endemic_resistance_rate
+
+categorical_features:
+  - sex
+  - pregnancy_status
+  - ward
+  - primary_diagnosis
+  - infection_source
+  - suspected_pathogen
+  - kidney_function
+  - liver_function
+  - drug_allergy
+  - allergy_severity
+  - prior_antibiotic_90d
+  - prior_resistant_organism
+
+multivalue_categorical_features:
+  - comorbidities
+
+llm_unstructured_features:
+  - clinical_note_for_llm
+
+target_candidates:
+  primary: resistance_phenotype
+  culture_status_col: culture_status
+
+# Strictly prohibited features that represent data leakage
+leakage_columns:
+  - amr_probability
+  - amr_probability_percent
+  - amr_risk_category
+  - esbl_ecoli_kp_probability
+  - mrsa_probability
+  - mdr_pseudomonas_probability
+  - cre_probability
+  - shap_prior_antibiotic
+  - shap_prior_resistant_culture
+  - shap_ward_resistance
+  - shap_icu
+  - shap_comorbidity
+  - shap_vitals
+  - ai_explanation
+  - ai_first_line_option
+  - ai_alternative_option
+  - coverage_score_percent
+  - renal_safety_note
+  - safety_warnings
+  - doctor_decision
+  - doctor_decision_rationale
+  - current_empiric_regimen
+  - culture_status
+  - culture_collection_datetime
+  - culture_pathogen
+  - resistance_phenotype
+  - culture_match_to_predicted_risk
+  - treatment_outcome
+  - deterioration_flag
+  - edge_case_flag

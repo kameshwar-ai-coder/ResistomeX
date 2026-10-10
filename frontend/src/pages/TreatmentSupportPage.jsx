@@ -5,9 +5,47 @@ import { PatientHeader } from '../components/PatientHeader';
 
 export const TreatmentSupportPage = () => {
   const { id } = useParams();
-  const { getPatientById } = usePatients();
-  const patient = getPatientById(id || 'P-72309');
+  const { getPatientById, loading, dbError } = usePatients();
+  const patient = getPatientById(id);
   const [selectedOption, setSelectedOption] = useState(1);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <PatientHeader />
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading treatment decision support options...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <PatientHeader />
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load treatment options from database.</p>
+          <p className="text-xs text-red-700">{dbError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <PatientHeader />
+        <div className="p-12 text-center text-[#5a5b82] space-y-2 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-4xl text-[#8e8ea9]">person_off</span>
+          <p className="text-base font-bold text-[#111124]">Patient record not found.</p>
+          <p className="text-xs">The requested patient record could not be retrieved from the database.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full space-y-6">
@@ -27,11 +65,11 @@ export const TreatmentSupportPage = () => {
         <div className="bg-white rounded-xl p-5 shadow-xs border border-[#ededf1] flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-[#f3f3f7] flex items-center justify-center text-[#111124] font-bold text-base">
-              {patient.name.split(' ').map(n => n[0]).join('')}
+              {(patient.name || 'PT').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT'}
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <h2 className="text-base text-[#111124] font-semibold tracking-tight">{patient.name}</h2>
+                <h2 className="text-base text-[#111124] font-semibold tracking-tight">{patient.name || 'Patient'}</h2>
                 <span className="text-[11px] bg-[#ededf1] px-2 py-0.5 rounded text-[#47464c] uppercase font-medium">{patient.mrn}</span>
                 <span className="text-[11px] bg-[#ededf1] px-2 py-0.5 rounded text-[#47464c] uppercase font-medium">{patient.bed}</span>
               </div>

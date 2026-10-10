@@ -1,0 +1,4 @@
+predicted_risk_tier,total_positive_cultures,confirmed_resistant_isolates,confirmed_susceptible_isolates,concordance_pct
+Low,938,199,739,78.8
+Medium,1769,833,936,52.9
+High,2084,1608,476,77.2

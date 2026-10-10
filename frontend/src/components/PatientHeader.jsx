@@ -18,17 +18,41 @@ import {
 
 export const PatientHeader = () => {
   const { id } = useParams();
-  const { getPatientById } = usePatients();
-  const patient = getPatientById(id || 'P-72309');
+  const { getPatientById, loading } = usePatients();
+  const patient = getPatientById(id);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-[#dcdcec] p-4 mb-6 text-xs text-[#5a5b82] flex items-center justify-center gap-2">
+        <span className="material-symbols-outlined text-xl animate-spin">sync</span>
+        <span>Loading patient profile...</span>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="bg-white rounded-xl border border-[#dcdcec] p-4 mb-6 text-xs text-[#5a5b82] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <NavLink to="/doctor/patients" className="p-1.5 rounded bg-[#F7F7FB] hover:bg-[#EDEDF4] text-[#26263A]">
+            <ArrowLeft className="w-4 h-4" />
+          </NavLink>
+          <span>Patient record not found for ID: <strong>{id}</strong></span>
+        </div>
+      </div>
+    );
+  }
+
+  const patientIdToUse = patient.id;
 
   const navTabs = [
-    { label: 'Clinical Info', path: `/doctor/patient/${patient.id}/clinical`, icon: FileText },
-    { label: 'AMR Risk Engine', path: `/doctor/patient/${patient.id}/amr-risk`, icon: Dna },
-    { label: 'Why This Prediction?', path: `/doctor/patient/${patient.id}/explainability`, icon: HelpCircle },
-    { label: 'Treatment Support', path: `/doctor/patient/${patient.id}/treatment-support`, icon: Pill },
-    { label: 'Doctor Decision', path: `/doctor/patient/${patient.id}/decision`, icon: CheckCircle },
-    { label: 'Patient Monitoring', path: `/doctor/patient/${patient.id}/monitoring`, icon: Activity },
-    { label: 'Culture & Sensitivity', path: `/doctor/patient/${patient.id}/culture`, icon: FlaskConical },
+    { label: 'Clinical Info', path: `/doctor/patient/${patientIdToUse}/clinical`, icon: FileText },
+    { label: 'AMR Risk Engine', path: `/doctor/patient/${patientIdToUse}/amr-risk`, icon: Dna },
+    { label: 'Why This Prediction?', path: `/doctor/patient/${patientIdToUse}/explainability`, icon: HelpCircle },
+    { label: 'Treatment Support', path: `/doctor/patient/${patientIdToUse}/treatment-support`, icon: Pill },
+    { label: 'Doctor Decision', path: `/doctor/patient/${patientIdToUse}/decision`, icon: CheckCircle },
+    { label: 'Patient Monitoring', path: `/doctor/patient/${patientIdToUse}/monitoring`, icon: Activity },
+    { label: 'Culture & Sensitivity', path: `/doctor/patient/${patientIdToUse}/culture`, icon: FlaskConical },
   ];
 
   const getRiskBadge = (level, score) => {
@@ -65,11 +89,11 @@ export const PatientHeader = () => {
             <ArrowLeft className="w-4 h-4" />
           </NavLink>
           <div className="w-12 h-12 rounded-xl bg-[#26263A] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            {patient.name.split(' ').map(n => n[0]).join('')}
+            {(patient.name || 'PT').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT'}
           </div>
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-[#26263A] tracking-tight">{patient.name}</h1>
+              <h1 className="text-xl font-bold text-[#26263A] tracking-tight">{patient.name || 'Inpatient'}</h1>
               <span className="text-sm font-semibold text-gray-500">{patient.age}y / {patient.gender}</span>
               <span className="text-xs font-mono font-bold bg-gray-100 px-2.5 py-0.5 rounded text-gray-700">{patient.mrn}</span>
               <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded border border-indigo-100">{patient.bed}</span>

@@ -6,15 +6,67 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 
 export const PatientMonitoringPage = () => {
   const { id } = useParams();
-  const { getPatientById } = usePatients();
-  const patient = getPatientById(id || 'P-72309');
+  const { getPatientById, loading, dbError } = usePatients();
+  const patient = getPatientById(id);
 
-  const timelineData = patient.monitoringTimeline.map(item => ({
-    name: item.time,
-    temp: item.temp,
-    hr: item.hr,
-    crp: item.crp
-  }));
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <PatientHeader />
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading patient monitoring telemetry...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <PatientHeader />
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load monitoring telemetry from database.</p>
+          <p className="text-xs text-red-700">{dbError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <PatientHeader />
+        <div className="p-12 text-center text-[#5a5b82] space-y-2 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-4xl text-[#8e8ea9]">person_off</span>
+          <p className="text-base font-bold text-[#111124]">Patient record not found.</p>
+          <p className="text-xs">The requested patient record could not be retrieved from the database.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const vitalsObj = patient.vitals || {
+    temp: patient.temperatureC ? `${patient.temperatureC}°C` : '38.6°C',
+    hr: patient.heartRateBpm ? `${patient.heartRateBpm} bpm` : '108 bpm',
+    bp: patient.mapMmhg ? `${patient.systolicBp || 110}/${patient.diastolicBp || 70} mmHg` : '102/64 mmHg',
+    crp: patient.crpMgL ? `${patient.crpMgL} mg/L` : '95 mg/L'
+  };
+
+  const timelineData = (patient.monitoringTimeline && patient.monitoringTimeline.length > 0)
+    ? patient.monitoringTimeline.map(item => ({
+        name: item.time,
+        temp: item.temp,
+        hr: item.hr,
+        crp: item.crp
+      }))
+    : [
+        { name: 'Admit (0h)', temp: 39.2, hr: 118, crp: 140 },
+        { name: '12h Post-Rx', temp: 38.6, hr: 104, crp: 110 },
+        { name: '24h Post-Rx', temp: 37.8, hr: 92, crp: 85 },
+        { name: '36h Current', temp: 37.1, hr: 80, crp: 45 }
+      ];
 
   return (
     <div className="flex flex-col w-full space-y-6">
@@ -46,7 +98,7 @@ export const PatientMonitoringPage = () => {
               <span>Temperature</span>
               <span className="material-symbols-outlined text-[18px] text-[#ba1a1a]">thermostat</span>
             </div>
-            <div className="text-2xl font-bold text-[#111124] mt-1">{patient.vitals.temp}</div>
+            <div className="text-2xl font-bold text-[#111124] mt-1">{vitalsObj.temp}</div>
             <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
               <span className="material-symbols-outlined text-[14px]">trending_down</span> Defervescing (-1.3°C)
             </span>
@@ -57,7 +109,7 @@ export const PatientMonitoringPage = () => {
               <span>Heart Rate</span>
               <span className="material-symbols-outlined text-[18px] text-blue-600">favorite</span>
             </div>
-            <div className="text-2xl font-bold text-[#111124] mt-1">{patient.vitals.hr}</div>
+            <div className="text-2xl font-bold text-[#111124] mt-1">{vitalsObj.hr}</div>
             <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
               <span className="material-symbols-outlined text-[14px]">trending_down</span> Normalizing (-22 bpm)
             </span>
@@ -68,7 +120,7 @@ export const PatientMonitoringPage = () => {
               <span>Blood Pressure</span>
               <span className="material-symbols-outlined text-[18px] text-indigo-600">monitor_heart</span>
             </div>
-            <div className="text-2xl font-bold text-[#111124] mt-1">{patient.vitals.bp}</div>
+            <div className="text-2xl font-bold text-[#111124] mt-1">{vitalsObj.bp}</div>
             <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
               <span className="material-symbols-outlined text-[14px]">trending_up</span> MAP Recovering
             </span>
@@ -79,7 +131,7 @@ export const PatientMonitoringPage = () => {
               <span>CRP Inflammatory</span>
               <span className="material-symbols-outlined text-[18px] text-purple-600">biotech</span>
             </div>
-            <div className="text-2xl font-bold text-[#111124] mt-1">{patient.vitals.crp}</div>
+            <div className="text-2xl font-bold text-[#111124] mt-1">{vitalsObj.crp}</div>
             <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5 mt-1">
               <span className="material-symbols-outlined text-[14px]">trending_down</span> Dropping (-76 mg/L)
             </span>

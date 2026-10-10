@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ResistomeX Phase 2 — Stratified Subgroup Analysis</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+        th { background: #f1f5f9; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .badge-stable { background: #dcfce7; color: #166534; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+        .badge-unstable { background: #fee2e2; color: #991b1b; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ResistomeX Phase 2 — Stratified Clinical Subgroup Performance</h1>
+    <p>Comprehensive evaluation across demographics, ward locations, infection sources, and prior antimicrobial exposures on untouched test set (N=724).</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Subgroup Category</th>
+                <th>Subgroup Value</th>
+                <th>Sample Size</th>
+                <th>Prevalence</th>
+                <th>Stability Status</th>
+                <th>ROC-AUC</th>
+                <th>PR-AUC</th>
+                <th>Sensitivity</th>
+                <th>Specificity</th>
+                <th>F1 Score</th>
+                <th>Brier Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Age Category</strong></td>
+                <td>50-69 years</td>
+                <td>324 (191 pos)</td>
+                <td>59.0%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.704</td>
+                <td>0.796</td>
+                <td>70.2%</td>
+                <td>57.1%</td>
+                <td>0.702</td>
+                <td>0.2166</td>
+            </tr>
+            <tr>
+                <td><strong>Age Category</strong></td>
+                <td><50 years</td>
+                <td>209 (102 pos)</td>
+                <td>48.8%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.685</td>
+                <td>0.677</td>
+                <td>51.0%</td>
+                <td>79.4%</td>
+                <td>0.591</td>
+                <td>0.2281</td>
+            </tr>
+            <tr>
+                <td><strong>Age Category</strong></td>
+                <td>>=70 years (Elderly)</td>
+                <td>191 (107 pos)</td>
+                <td>56.0%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.706</td>
+                <td>0.740</td>
+                <td>72.0%</td>
+                <td>58.3%</td>
+                <td>0.703</td>
+                <td>0.2156</td>
+            </tr>
+            <tr>
+                <td><strong>Sex</strong></td>
+                <td>Female</td>
+                <td>360 (201 pos)</td>
+                <td>55.8%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.728</td>
+                <td>0.763</td>
+                <td>66.7%</td>
+                <td>69.2%</td>
+                <td>0.698</td>
+                <td>0.2124</td>
+            </tr>
+            <tr>
+                <td><strong>Sex</strong></td>
+                <td>Male</td>
+                <td>364 (199 pos)</td>
+                <td>54.7%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.674</td>
+                <td>0.735</td>
+                <td>64.8%</td>
+                <td>60.6%</td>
+                <td>0.656</td>
+                <td>0.2268</td>
+            </tr>
+            <tr>
+                <td><strong>Ward Location</strong></td>
+                <td>Emergency Department</td>
+                <td>95 (42 pos)</td>
+                <td>44.2%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.662</td>
+                <td>0.624</td>
+                <td>47.6%</td>
+                <td>73.6%</td>
+                <td>0.526</td>
+                <td>0.2293</td>
+            </tr>
+            <tr>
+                <td><strong>Ward Location</strong></td>
+                <td>General Medicine</td>
+                <td>321 (162 pos)</td>
+                <td>50.5%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.690</td>
+                <td>0.715</td>
+                <td>56.8%</td>
+                <td>73.6%</td>
+                <td>0.622</td>
+                <td>0.2233</td>
+            </tr>
+            <tr>
+                <td><strong>Ward Location</strong></td>
+                <td>ICU</td>
+                <td>142 (89 pos)</td>
+                <td>62.7%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.686</td>
+                <td>0.782</td>
+                <td>82.0%</td>
+                <td>32.1%</td>
+                <td>0.737</td>
+                <td>0.2110</td>
+            </tr>
+            <tr>
+                <td><strong>Ward Location</strong></td>
+                <td>Surgical Ward</td>
+                <td>166 (107 pos)</td>
+                <td>64.5%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.705</td>
+                <td>0.814</td>
+                <td>72.9%</td>
+                <td>62.7%</td>
+                <td>0.754</td>
+                <td>0.2145</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Bloodstream Infection</td>
+                <td>43 (21 pos)</td>
+                <td>48.8%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.645</td>
+                <td>0.605</td>
+                <td>57.1%</td>
+                <td>54.5%</td>
+                <td>0.558</td>
+                <td>0.2383</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Community-Acquired Pneumonia</td>
+                <td>122 (69 pos)</td>
+                <td>56.6%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.638</td>
+                <td>0.705</td>
+                <td>65.2%</td>
+                <td>56.6%</td>
+                <td>0.657</td>
+                <td>0.2388</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Hospital-Acquired Pneumonia</td>
+                <td>86 (58 pos)</td>
+                <td>67.4%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.748</td>
+                <td>0.863</td>
+                <td>74.1%</td>
+                <td>67.9%</td>
+                <td>0.782</td>
+                <td>0.2009</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Intra-abdominal Infection</td>
+                <td>183 (94 pos)</td>
+                <td>51.4%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.617</td>
+                <td>0.633</td>
+                <td>61.7%</td>
+                <td>56.2%</td>
+                <td>0.607</td>
+                <td>0.2449</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Skin/Soft Tissue Infection</td>
+                <td>38 (19 pos)</td>
+                <td>50.0%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.845</td>
+                <td>0.870</td>
+                <td>73.7%</td>
+                <td>84.2%</td>
+                <td>0.778</td>
+                <td>0.1770</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Surgical Site Infection</td>
+                <td>35 (20 pos)</td>
+                <td>57.1%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.650</td>
+                <td>0.759</td>
+                <td>65.0%</td>
+                <td>53.3%</td>
+                <td>0.650</td>
+                <td>0.2346</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Urinary Tract Infection</td>
+                <td>146 (75 pos)</td>
+                <td>51.4%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.771</td>
+                <td>0.810</td>
+                <td>62.7%</td>
+                <td>78.9%</td>
+                <td>0.686</td>
+                <td>0.1979</td>
+            </tr>
+            <tr>
+                <td><strong>Infection Source</strong></td>
+                <td>Ventilator-Associated Pneumonia</td>
+                <td>71 (44 pos)</td>
+                <td>62.0%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.774</td>
+                <td>0.864</td>
+                <td>70.5%</td>
+                <td>70.4%</td>
+                <td>0.747</td>
+                <td>0.1934</td>
+            </tr>
+            <tr>
+                <td><strong>Kidney Function</strong></td>
+                <td>AKI</td>
+                <td>42 (24 pos)</td>
+                <td>57.1%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.674</td>
+                <td>0.744</td>
+                <td>62.5%</td>
+                <td>61.1%</td>
+                <td>0.652</td>
+                <td>0.2273</td>
+            </tr>
+            <tr>
+                <td><strong>Kidney Function</strong></td>
+                <td>Mild impairment</td>
+                <td>135 (61 pos)</td>
+                <td>45.2%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.653</td>
+                <td>0.645</td>
+                <td>62.3%</td>
+                <td>60.8%</td>
+                <td>0.594</td>
+                <td>0.2317</td>
+            </tr>
+            <tr>
+                <td><strong>Kidney Function</strong></td>
+                <td>Moderate impairment</td>
+                <td>91 (48 pos)</td>
+                <td>52.7%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.685</td>
+                <td>0.678</td>
+                <td>66.7%</td>
+                <td>58.1%</td>
+                <td>0.653</td>
+                <td>0.2240</td>
+            </tr>
+            <tr>
+                <td><strong>Kidney Function</strong></td>
+                <td>Normal</td>
+                <td>420 (245 pos)</td>
+                <td>58.3%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.708</td>
+                <td>0.780</td>
+                <td>65.3%</td>
+                <td>68.6%</td>
+                <td>0.696</td>
+                <td>0.2182</td>
+            </tr>
+            <tr>
+                <td><strong>Kidney Function</strong></td>
+                <td>Severe impairment</td>
+                <td>28 (19 pos)</td>
+                <td>67.9%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.906</td>
+                <td>0.962</td>
+                <td>89.5%</td>
+                <td>55.6%</td>
+                <td>0.850</td>
+                <td>0.1581</td>
+            </tr>
+            <tr>
+                <td><strong>Kidney Function</strong></td>
+                <td>Unknown</td>
+                <td>8 (3 pos)</td>
+                <td>37.5%</td>
+                <td><span class="badge-unstable">Small N</span></td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td><strong>Prior Antibiotic Exposure</strong></td>
+                <td>1 prior exposure</td>
+                <td>189 (108 pos)</td>
+                <td>57.1%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.752</td>
+                <td>0.819</td>
+                <td>70.4%</td>
+                <td>66.7%</td>
+                <td>0.720</td>
+                <td>0.2025</td>
+            </tr>
+            <tr>
+                <td><strong>Prior Antibiotic Exposure</strong></td>
+                <td>>=2 prior exposures</td>
+                <td>183 (131 pos)</td>
+                <td>71.6%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.713</td>
+                <td>0.854</td>
+                <td>90.8%</td>
+                <td>26.9%</td>
+                <td>0.826</td>
+                <td>0.1858</td>
+            </tr>
+            <tr>
+                <td><strong>Prior Antibiotic Exposure</strong></td>
+                <td>No prior exposure (0)</td>
+                <td>352 (161 pos)</td>
+                <td>45.7%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.613</td>
+                <td>0.544</td>
+                <td>42.2%</td>
+                <td>74.3%</td>
+                <td>0.489</td>
+                <td>0.2465</td>
+            </tr>
+            <tr>
+                <td><strong>Prior AMR History</strong></td>
+                <td>No prior resistant history</td>
+                <td>521 (248 pos)</td>
+                <td>47.6%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.648</td>
+                <td>0.637</td>
+                <td>46.8%</td>
+                <td>75.1%</td>
+                <td>0.537</td>
+                <td>0.2344</td>
+            </tr>
+            <tr>
+                <td><strong>Prior AMR History</strong></td>
+                <td>Prior resistant organism documented</td>
+                <td>203 (152 pos)</td>
+                <td>74.9%</td>
+                <td><span class="badge-stable">Stable</span></td>
+                <td>0.653</td>
+                <td>0.851</td>
+                <td>96.7%</td>
+                <td>9.8%</td>
+                <td>0.852</td>
+                <td>0.1817</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

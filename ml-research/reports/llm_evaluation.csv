@@ -1,0 +1,2 @@
+total_notes_evaluated,json_validity_rate,hallucination_rate,previous_antibiotic_precision,previous_antibiotic_recall,previous_antibiotic_f1,drug_allergy_accuracy,prior_organism_accuracy,shap_alignment_score,unsupported_claim_rate,patient_fact_accuracy,evaluated_explanations_count,adversarial_tests_run,defended_count,prompt_injection_defense_rate,status
+100,1.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.08,0.92,50,3,3,1.0,PASS

@@ -5,14 +5,49 @@ import { RecordVitalsModal } from '../components/RecordVitalsModal';
 
 export const NursePatientDetailPage = () => {
   const { id } = useParams();
-  const { getPatientById } = usePatients();
-  const patient = getPatientById(id || 'P-72309');
+  const { getPatientById, loading, dbError } = usePatients();
+  const patient = getPatientById(id);
   const [isVitalsModalOpen, setIsVitalsModalOpen] = useState(false);
   const [marLog, setMarLog] = useState([
     { time: '08:00 AM', dose: 'Meropenem 500mg IV', adminBy: 'RN Sarah Jenkins', status: 'Administered' },
     { time: '04:00 PM', dose: 'Meropenem 500mg IV', adminBy: 'RN Sarah Jenkins', status: 'Scheduled' },
     { time: '12:00 AM', dose: 'Meropenem 500mg IV', adminBy: 'Night Shift RN', status: 'Scheduled' }
   ]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-3 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-3xl animate-spin">sync</span>
+          <p className="text-sm font-semibold">Loading bedside patient details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
+          <span className="material-symbols-outlined text-3xl text-red-600">error</span>
+          <p className="text-sm font-bold">Unable to load bedside details from database.</p>
+          <p className="text-xs text-red-700">{dbError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="flex flex-col w-full space-y-6">
+        <div className="p-12 text-center text-[#5a5b82] space-y-2 bg-white rounded-xl border border-[#ededf1]">
+          <span className="material-symbols-outlined text-4xl text-[#8e8ea9]">person_off</span>
+          <p className="text-base font-bold text-[#111124]">Patient record not found.</p>
+          <p className="text-xs">The requested bedside patient record could not be retrieved from the database.</p>
+        </div>
+      </div>
+    );
+  }
 
   const toggleMar = (index) => {
     setMarLog(prev => prev.map((item, idx) => {
@@ -26,6 +61,19 @@ export const NursePatientDetailPage = () => {
     }));
   };
 
+  const vitalsObj = patient.vitals || {
+    temp: patient.temperatureC ? `${patient.temperatureC}°C` : '38.6°C',
+    hr: patient.heartRateBpm ? `${patient.heartRateBpm} bpm` : '108 bpm',
+    bp: patient.mapMmhg ? `${patient.systolicBp || 110}/${patient.diastolicBp || 70} mmHg` : '102/64 mmHg',
+    spo2: patient.spo2Percent ? `${patient.spo2Percent}%` : '96%',
+    wbc: patient.wbcCount ? `${patient.wbcCount} x10^9/L` : '14.2 x10^9/L',
+    crp: patient.crpMgL ? `${patient.crpMgL} mg/L` : '95 mg/L',
+    updatedAt: 'Recent'
+  };
+
+  const patientName = patient.name || 'Inpatient';
+  const initials = patientName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT';
+
   return (
     <div className="flex flex-col w-full space-y-6">
       {/* Header Banner */}
@@ -35,11 +83,11 @@ export const NursePatientDetailPage = () => {
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </NavLink>
           <div className="w-12 h-12 rounded-full bg-[#111124] text-white flex items-center justify-center font-bold text-base">
-            {patient.name.split(' ').map(n => n[0]).join('')}
+            {initials}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#111124]">{patient.name}</h1>
-            <p className="text-xs text-[#5a5b82]">{patient.bed} • {patient.ward} • MRN: <span className="font-mono font-bold text-[#111124]">{patient.mrn}</span></p>
+            <h1 className="text-xl font-bold text-[#111124]">{patientName}</h1>
+            <p className="text-xs text-[#5a5b82]">{patient.bed || 'Bed --'} • {patient.ward || 'Ward'} • MRN: <span className="font-mono font-bold text-[#111124]">{patient.mrn || patient.id}</span></p>
           </div>
         </div>
 
@@ -59,33 +107,33 @@ export const NursePatientDetailPage = () => {
           <div className="bg-white rounded-xl border border-[#ededf1] shadow-xs p-5 space-y-4">
             <h2 className="text-sm font-bold text-[#111124] flex items-center gap-2 border-b border-[#ededf1] pb-3">
               <span className="material-symbols-outlined text-[18px]">monitor_heart</span>
-              Nurse Vital Sign Recording ({patient.vitals.updatedAt})
+              Nurse Vital Sign Recording ({vitalsObj.updatedAt || 'Recent'})
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="p-3 bg-[#f3f3f7] rounded border border-[#ededf1]">
                 <span className="text-[10px] font-bold text-[#5a5b82] uppercase">Temperature</span>
-                <p className="text-lg font-bold text-[#111124] mt-0.5">{patient.vitals.temp}</p>
+                <p className="text-lg font-bold text-[#111124] mt-0.5">{vitalsObj.temp}</p>
               </div>
               <div className="p-3 bg-[#f3f3f7] rounded border border-[#ededf1]">
                 <span className="text-[10px] font-bold text-[#5a5b82] uppercase">Heart Rate</span>
-                <p className="text-lg font-bold text-[#111124] mt-0.5">{patient.vitals.hr}</p>
+                <p className="text-lg font-bold text-[#111124] mt-0.5">{vitalsObj.hr}</p>
               </div>
               <div className="p-3 bg-[#f3f3f7] rounded border border-[#ededf1]">
                 <span className="text-[10px] font-bold text-[#5a5b82] uppercase">Blood Pressure</span>
-                <p className="text-lg font-bold text-[#111124] mt-0.5">{patient.vitals.bp}</p>
+                <p className="text-lg font-bold text-[#111124] mt-0.5">{vitalsObj.bp}</p>
               </div>
               <div className="p-3 bg-[#f3f3f7] rounded border border-[#ededf1]">
                 <span className="text-[10px] font-bold text-[#5a5b82] uppercase">SpO2 Oxygen</span>
-                <p className="text-lg font-bold text-[#111124] mt-0.5">{patient.vitals.spo2}</p>
+                <p className="text-lg font-bold text-[#111124] mt-0.5">{vitalsObj.spo2}</p>
               </div>
               <div className="p-3 bg-[#f3f3f7] rounded border border-[#ededf1]">
                 <span className="text-[10px] font-bold text-[#5a5b82] uppercase">WBC Count</span>
-                <p className="text-lg font-bold text-[#111124] mt-0.5">{patient.vitals.wbc}</p>
+                <p className="text-lg font-bold text-[#111124] mt-0.5">{vitalsObj.wbc}</p>
               </div>
               <div className="p-3 bg-[#f3f3f7] rounded border border-[#ededf1]">
                 <span className="text-[10px] font-bold text-[#5a5b82] uppercase">CRP Inflammatory</span>
-                <p className="text-lg font-bold text-[#111124] mt-0.5">{patient.vitals.crp}</p>
+                <p className="text-lg font-bold text-[#111124] mt-0.5">{vitalsObj.crp}</p>
               </div>
             </div>
           </div>
