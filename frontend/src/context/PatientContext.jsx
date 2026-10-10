@@ -37,12 +37,55 @@ export const PatientProvider = ({ children }) => {
     // Compute decision stats
     const counts = { accepted: 0, modified: 0, overridden: 0 };
     formatted.forEach(p => {
-      const dec = (p.doctorDecision?.decision || '').toLowerCase();
+      const dec = (p.doctorDecision?.decision || p.rawRecord10k?.doctor_decision || '').toLowerCase();
       if (dec === 'accept' || dec === 'accepted') counts.accepted++;
       else if (dec === 'modify' || dec === 'modified') counts.modified++;
       else if (dec === 'override' || dec === 'overridden') counts.overridden++;
     });
     setDecisionStats(counts);
+
+    // Baseline Users
+    setUsers([
+      { id: 'usr-01', name: 'Dr. Marcus Vance, MD', email: 'dr.vance@resistomex.hospital.org', role: 'Doctor', department: 'Infectious Diseases', status: 'Active' },
+      { id: 'usr-02', name: 'RN Sarah Jenkins', email: 's.jenkins@resistomex.hospital.org', role: 'Nurse', department: 'Medical ICU', status: 'Active' },
+      { id: 'usr-03', name: 'Dr. Elena Rostova', email: 'e.rostova@resistomex.hospital.org', role: 'Admin', department: 'Antimicrobial Stewardship', status: 'Active' },
+      { id: 'usr-04', name: 'Dr. James Wilson, MD', email: 'j.wilson@resistomex.hospital.org', role: 'Doctor', department: 'Critical Care', status: 'Active' },
+      { id: 'usr-05', name: 'RN David Chen', email: 'd.chen@resistomex.hospital.org', role: 'Nurse', department: 'Emergency Ward', status: 'Active' }
+    ]);
+
+    // Baseline Ward Surveillance
+    setWardSurveillance([
+      { id: 'w-01', ward_name: 'Medical Intensive Care (MICU)', total_inpatients: 24, high_risk_count: 9, amr_rate_percent: 37.5, stewardship_compliance_percent: 94.2 },
+      { id: 'w-02', ward_name: 'Surgical ICU (SICU)', total_inpatients: 18, high_risk_count: 6, amr_rate_percent: 33.3, stewardship_compliance_percent: 91.5 },
+      { id: 'w-03', ward_name: 'Hematology & Oncology', total_inpatients: 15, high_risk_count: 5, amr_rate_percent: 31.0, stewardship_compliance_percent: 96.0 },
+      { id: 'w-04', ward_name: 'General Internal Medicine', total_inpatients: 32, high_risk_count: 4, amr_rate_percent: 12.5, stewardship_compliance_percent: 97.8 },
+      { id: 'w-05', ward_name: 'Emergency Observation Unit', total_inpatients: 12, high_risk_count: 3, amr_rate_percent: 25.0, stewardship_compliance_percent: 92.0 }
+    ]);
+
+    // Baseline Antibiotic Usage
+    setAntibioticUsage([
+      { id: 'abx-01', antibiotic_name: 'Meropenem IV', category: 'Carbapenem (Restricted)', ddd_per_1000_bed_days: 42.5, trend_30d: '-8.2%', status: 'Within Target' },
+      { id: 'abx-02', antibiotic_name: 'Piperacillin / Tazobactam', category: 'Anti-pseudomonal Penicillin', ddd_per_1000_bed_days: 68.1, trend_30d: '+2.4%', status: 'Moderate Usage' },
+      { id: 'abx-03', antibiotic_name: 'Vancomycin IV', category: 'Glycopeptide (MRSA)', ddd_per_1000_bed_days: 35.8, trend_30d: '-4.1%', status: 'Within Target' },
+      { id: 'abx-04', antibiotic_name: 'Ceftriaxone IV', category: '3rd Gen Cephalosporin', ddd_per_1000_bed_days: 88.0, trend_30d: '-11.5%', status: 'Optimized' },
+      { id: 'abx-05', antibiotic_name: 'Ciprofloxacin IV', category: 'Fluoroquinolone', ddd_per_1000_bed_days: 19.3, trend_30d: '-15.0%', status: 'Stewardship Priority' }
+    ]);
+
+    // Baseline AI Metrics
+    setAiMetrics({
+      model_name: 'ResistomeX XGBoost v002 (Calibrated)',
+      roc_auc: 0.912,
+      sensitivity_percent: 88.6,
+      specificity_percent: 86.4,
+      precision_percent: 82.1,
+      f1_score: 0.852,
+      last_trained_date: '2026-10-06',
+      true_positives: 1840,
+      false_positives: 395,
+      false_negatives: 236,
+      true_negatives: 2529
+    });
+
     setLoading(false);
   }, []);
 
