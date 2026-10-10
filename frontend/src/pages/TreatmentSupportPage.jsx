@@ -65,11 +65,11 @@ export const TreatmentSupportPage = () => {
         <div className="bg-white rounded-xl p-5 shadow-xs border border-[#ededf1] flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-[#f3f3f7] flex items-center justify-center text-[#111124] font-bold text-base">
-              {patient.name.split(' ').map(n => n[0]).join('')}
+              {(patient.name || 'PT').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT'}
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <h2 className="text-base text-[#111124] font-semibold tracking-tight">{patient.name}</h2>
+                <h2 className="text-base text-[#111124] font-semibold tracking-tight">{patient.name || 'Patient'}</h2>
                 <span className="text-[11px] bg-[#ededf1] px-2 py-0.5 rounded text-[#47464c] uppercase font-medium">{patient.mrn}</span>
                 <span className="text-[11px] bg-[#ededf1] px-2 py-0.5 rounded text-[#47464c] uppercase font-medium">{patient.bed}</span>
               </div>

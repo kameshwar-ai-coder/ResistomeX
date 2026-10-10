@@ -89,11 +89,11 @@ export const PatientHeader = () => {
             <ArrowLeft className="w-4 h-4" />
           </NavLink>
           <div className="w-12 h-12 rounded-xl bg-[#26263A] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            {patient.name.split(' ').map(n => n[0]).join('')}
+            {(patient.name || 'PT').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT'}
           </div>
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-[#26263A] tracking-tight">{patient.name}</h1>
+              <h1 className="text-xl font-bold text-[#26263A] tracking-tight">{patient.name || 'Inpatient'}</h1>
               <span className="text-sm font-semibold text-gray-500">{patient.age}y / {patient.gender}</span>
               <span className="text-xs font-mono font-bold bg-gray-100 px-2.5 py-0.5 rounded text-gray-700">{patient.mrn}</span>
               <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded border border-indigo-100">{patient.bed}</span>

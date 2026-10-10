@@ -71,6 +71,9 @@ export const NursePatientDetailPage = () => {
     updatedAt: 'Recent'
   };
 
+  const patientName = patient.name || 'Inpatient';
+  const initials = patientName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT';
+
   return (
     <div className="flex flex-col w-full space-y-6">
       {/* Header Banner */}
@@ -80,11 +83,11 @@ export const NursePatientDetailPage = () => {
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </NavLink>
           <div className="w-12 h-12 rounded-full bg-[#111124] text-white flex items-center justify-center font-bold text-base">
-            {patient.name.split(' ').map(n => n[0]).join('')}
+            {initials}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#111124]">{patient.name}</h1>
-            <p className="text-xs text-[#5a5b82]">{patient.bed} • {patient.ward} • MRN: <span className="font-mono font-bold text-[#111124]">{patient.mrn}</span></p>
+            <h1 className="text-xl font-bold text-[#111124]">{patientName}</h1>
+            <p className="text-xs text-[#5a5b82]">{patient.bed || 'Bed --'} • {patient.ward || 'Ward'} • MRN: <span className="font-mono font-bold text-[#111124]">{patient.mrn || patient.id}</span></p>
           </div>
         </div>
 

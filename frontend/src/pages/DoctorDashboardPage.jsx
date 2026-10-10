@@ -173,11 +173,11 @@ export const DoctorDashboardPage = () => {
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                   patient.amrRiskLevel === 'High' ? 'bg-[#ffdad6] text-[#ba1a1a]' : 'bg-[#e2e0fb] text-[#111124]'
                 }`}>
-                  {patient.name.split(' ').map(n => n[0]).join('')}
+                  {(patient.name || 'PT').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || 'PT'}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-[#111124] font-semibold">{patient.name}</span>
+                    <span className="text-sm text-[#111124] font-semibold">{patient.name || 'Patient'}</span>
                     <span className="text-xs text-[#5a5b82] font-medium">{patient.age}y</span>
                     <span className="text-xs font-mono text-[#5a5b82]">{patient.mrn}</span>
                     <span className="px-2 py-0.5 rounded text-[11px] bg-[#ededf1] text-[#1a1c1f] font-medium">{patient.bed}</span>
