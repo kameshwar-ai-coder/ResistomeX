@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { usePatients } from '../context/PatientContext';
 import { useAuth } from '../context/AuthContext';
 import { AddPatientModal } from '../components/AddPatientModal';
@@ -8,6 +8,7 @@ export const PatientsListPage = () => {
   const { patients, searchQuery, setSearchQuery, selectedRiskFilter, setSelectedRiskFilter, loadFull10kDataset, is10kLoaded, loading, dbError } = usePatients();
   const { role } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [infectionFilter, setInfectionFilter] = useState('');
@@ -17,7 +18,10 @@ export const PatientsListPage = () => {
   // Sync tab with location search if navigated via /doctor/patients?tab=history
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('tab') === 'history') {
+    const tabParam = params.get('tab');
+    if (tabParam === 'history') {
+      setStatusTab('Discharged');
+    } else if (tabParam === 'all') {
       setStatusTab('All');
     } else {
       setStatusTab('Active');
@@ -135,7 +139,7 @@ export const PatientsListPage = () => {
       {/* Main Tab Toggle: Active vs Discharged & Recovered History */}
       <div className="flex flex-wrap items-center gap-3 border-b border-[#ededf1] pb-3">
         <button
-          onClick={() => setStatusTab('Active')}
+          onClick={() => { setStatusTab('Active'); navigate('/doctor/patients', { replace: true }); }}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
             statusTab === 'Active'
               ? 'bg-[#111124] text-white shadow-xs'
@@ -150,7 +154,7 @@ export const PatientsListPage = () => {
         </button>
 
         <button
-          onClick={() => setStatusTab('Discharged')}
+          onClick={() => { setStatusTab('Discharged'); navigate('/doctor/patients?tab=history', { replace: true }); }}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
             statusTab === 'Discharged'
               ? 'bg-[#111124] text-white shadow-xs'
@@ -165,7 +169,7 @@ export const PatientsListPage = () => {
         </button>
 
         <button
-          onClick={() => setStatusTab('All')}
+          onClick={() => { setStatusTab('All'); navigate('/doctor/patients?tab=all', { replace: true }); }}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
             statusTab === 'All'
               ? 'bg-[#111124] text-white shadow-xs'

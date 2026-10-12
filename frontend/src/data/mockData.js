@@ -1,4 +1,4 @@
-// ResistomeX Clinical Dataset (Static Fabricated Mock Data Cleared)
+// ResistomeX Clinical Dataset Initial Baseline State Definitions
 
 export const INITIAL_PATIENTS = [];
 

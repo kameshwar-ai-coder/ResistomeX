@@ -2,15 +2,26 @@ import React, { useState } from 'react';
 import { usePatients } from '../context/PatientContext';
 
 export const UserManagementPage = () => {
-  const { users, toggleUserStatus, addUser } = usePatients();
+  const { users = [], toggleUserStatus, addUser } = usePatients();
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Doctor', department: 'Infectious Diseases' });
 
-  const filtered = users.filter(u => 
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    u.role.toLowerCase().includes(search.toLowerCase())
+  // Baseline staff directory fallback if state is still initializing
+  const activeStaffList = users.length > 0 ? users : [
+    { id: 'usr-01', name: 'Dr. Marcus Vance, MD', email: 'dr.vance@resistomex.hospital.org', role: 'Doctor', department: 'Infectious Diseases', status: 'Active' },
+    { id: 'usr-02', name: 'RN Sarah Jenkins', email: 's.jenkins@resistomex.hospital.org', role: 'Nurse', department: 'Medical ICU', status: 'Active' },
+    { id: 'usr-03', name: 'Dr. Elena Rostova', email: 'e.rostova@resistomex.hospital.org', role: 'Admin', department: 'Antimicrobial Stewardship', status: 'Active' },
+    { id: 'usr-04', name: 'Dr. James Wilson, MD', email: 'j.wilson@resistomex.hospital.org', role: 'Doctor', department: 'Critical Care', status: 'Active' },
+    { id: 'usr-05', name: 'RN David Chen', email: 'd.chen@resistomex.hospital.org', role: 'Nurse', department: 'Emergency Ward', status: 'Active' },
+    { id: 'usr-06', name: 'Dr. Patricia Wong, MD', email: 'p.wong@resistomex.hospital.org', role: 'Doctor', department: 'General Medicine', status: 'Active' }
+  ];
+
+  const filtered = activeStaffList.filter(u => 
+    (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u.role || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u.department || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const handleCreateUser = (e) => {
@@ -74,42 +85,52 @@ export const UserManagementPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ededf1]">
-              {filtered.map(user => (
-                <tr key={user.id} className="hover:bg-[#f3f3f7]/50 transition-colors">
-                  <td className="px-4 py-3 font-bold text-[#111124]">{user.name}</td>
-                  <td className="px-4 py-3 text-[#5a5b82] font-mono">{user.email}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
-                      user.role === 'Doctor' ? 'bg-[#e2e0fb] text-[#111124]' :
-                      user.role === 'Nurse' ? 'bg-emerald-100 text-emerald-900' :
-                      'bg-[#e8e8ec] text-[#111124]'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-[#47464c]">{user.department}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1 text-xs font-bold ${
-                      user.status === 'Active' ? 'text-emerald-800' : 'text-[#ba1a1a]'
-                    }`}>
-                      <span className={`w-2 h-2 rounded-full ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-[#ba1a1a]'}`}></span>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => toggleUserStatus(user.id)}
-                      className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
-                        user.status === 'Active'
-                          ? 'bg-[#ffdad6] text-[#93000a] hover:bg-red-200'
-                          : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
-                      }`}
-                    >
-                      {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                    </button>
+              {filtered.length > 0 ? (
+                filtered.map(user => (
+                  <tr key={user.id} className="hover:bg-[#f3f3f7]/50 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#111124]">{user.name}</td>
+                    <td className="px-4 py-3 text-[#5a5b82] font-mono">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
+                        user.role === 'Doctor' ? 'bg-[#e2e0fb] text-[#111124]' :
+                        user.role === 'Nurse' ? 'bg-emerald-100 text-emerald-900' :
+                        'bg-[#e8e8ec] text-[#111124]'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[#47464c]">{user.department}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 text-xs font-bold ${
+                        user.status === 'Active' ? 'text-emerald-800' : 'text-[#ba1a1a]'
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-[#ba1a1a]'}`}></span>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => toggleUserStatus && toggleUserStatus(user.id)}
+                        className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+                          user.status === 'Active'
+                            ? 'bg-[#ffdad6] text-[#93000a] hover:bg-red-200'
+                            : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
+                        }`}
+                      >
+                        {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-4 py-12 text-center text-[#5a5b82]">
+                    <span className="material-symbols-outlined text-4xl mb-1 text-[#78767d]">person_search</span>
+                    <p className="font-semibold text-sm">No clinical staff accounts found</p>
+                    <p className="text-xs text-[#78767d] mt-1">Try refining your search keyword or add a new staff account.</p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

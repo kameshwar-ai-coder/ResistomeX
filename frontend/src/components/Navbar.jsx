@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePatients } from '../context/PatientContext';
 
-export const Navbar = () => {
+export const Navbar = ({ sidebarWidth = 256, isSidebarCollapsed = false, onToggleSidebar }) => {
   const { role, user, logout } = useAuth();
   const { patients, searchQuery, setSearchQuery } = usePatients();
   const navigate = useNavigate();
@@ -21,9 +21,12 @@ export const Navbar = () => {
   const currentUser = user || { name: 'Medical Staff', title: 'Attending Physician', avatar: 'RX' };
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 bg-white border-b border-[#ededf1] z-40 px-6 flex items-center justify-between gap-4">
+    <header
+      style={{ left: `${sidebarWidth}px` }}
+      className="fixed top-0 right-0 h-16 bg-white border-b border-[#ededf1] z-40 px-6 flex items-center justify-between gap-4 transition-[left] duration-150"
+    >
       {/* Search Input */}
-      <div className="flex-1 max-w-lg">
+      <div className="flex items-center gap-3 flex-1 max-w-lg">
         <div className="relative flex items-center w-full">
           <span className="material-symbols-outlined absolute left-3 text-[#78767d] text-[18px]">search</span>
           <input

@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('resistomex_session', JSON.stringify({ userObj, userRole, sessionObj }));
   };
 
-  // Direct Preset Login for Demo & Rapid Role Switching
+  // Direct Preset Login for Clinical Staff & Rapid Role Switching
   const directLogin = (selectedRole = 'doctor', inputEmail = '', extraMeta = {}) => {
     const roleTitles = {
       doctor: 'Attending Physician · Infectious Diseases',

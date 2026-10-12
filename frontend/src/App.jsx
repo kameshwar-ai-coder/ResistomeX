@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PatientProvider } from './context/PatientContext';
@@ -82,17 +82,51 @@ const RoleProtectedRoute = ({ allowedRoles, children }) => {
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('resistomex_sidebar_width');
+    const parsed = saved ? parseInt(saved, 10) : 256;
+    return isNaN(parsed) || parsed < 64 || parsed > 440 ? 256 : parsed;
+  });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
 
   if (isAuthPage) {
     return <main>{children}</main>;
   }
 
+  const effectiveWidth = isSidebarCollapsed ? 64 : sidebarWidth;
+
+  const handleToggleCollapse = () => {
+    setIsSidebarCollapsed(prev => !prev);
+  };
+
+  const handleWidthChange = (newWidth) => {
+    setSidebarWidth(newWidth);
+    localStorage.setItem('resistomex_sidebar_width', newWidth.toString());
+    if (newWidth <= 72) {
+      setIsSidebarCollapsed(true);
+    } else {
+      setIsSidebarCollapsed(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F7FB]">
-      <Sidebar />
-      <Navbar />
-      <main className="pl-64 pt-16 min-h-screen p-6 max-w-7xl mx-auto">
+      <Sidebar
+        width={effectiveWidth}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleCollapse}
+        onWidthChange={handleWidthChange}
+      />
+      <Navbar
+        sidebarWidth={effectiveWidth}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={handleToggleCollapse}
+      />
+      <main
+        style={{ paddingLeft: `${effectiveWidth}px` }}
+        className="pt-16 min-h-screen p-6 max-w-7xl mx-auto transition-[padding] duration-150"
+      >
         {children}
       </main>
     </div>

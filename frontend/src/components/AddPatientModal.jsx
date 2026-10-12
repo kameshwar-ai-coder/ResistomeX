@@ -24,8 +24,84 @@ import {
   Zap,
   ArrowRight,
   Layers,
-  Sparkles
+  Sparkles,
+  Download,
+  Copy,
+  FileCode,
+  Check,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+
+export const MOCK_TEMPLATE_ROW = {
+  patient_id: 'PT-10492',
+  encounter_id: 'ENC-88301',
+  admission_datetime: '2026-10-12',
+  patient_name: 'Eleanor Vance',
+  age_years: 64,
+  sex: 'Female',
+  pregnancy_status: 'Not applicable',
+  ward: 'ICU Ward 22',
+  bed: 'Bed 08',
+  patient_status: 'Admitted',
+  primary_diagnosis: 'Urosepsis with suspected pyelonephritis',
+  infection_source: 'Urinary Tract',
+  suspected_pathogen: 'Klebsiella pneumoniae',
+  temperature_c: 38.8,
+  heart_rate_bpm: 108,
+  systolic_bp_mmhg: 110,
+  diastolic_bp_mmhg: 68,
+  spo2_percent: 94,
+  respiratory_rate_bpm: 22,
+  crp_mg_l: 54.2,
+  comorbidities: 'Type 2 Diabetes; CKD Stage 2',
+  kidney_function: 'Mild impairment',
+  liver_function: 'Normal',
+  drug_allergy: 'Penicillin',
+  allergy_severity: 'Moderate hives / rash',
+  prior_antibiotic_exposure_count_90d: 2,
+  prior_antibiotic_90d: 'Ceftriaxone; Ciprofloxacin',
+  prior_antibiotic_days: 7,
+  prior_resistant_organism: 'ESBL E. coli (3 mo prior)',
+  ward_endemic_resistance_rate: 0.28,
+  culture_status: 'Pending Lab',
+  culture_pathogen: 'Klebsiella pneumoniae'
+};
+
+export const MOCK_TEMPLATE_COLUMNS = [
+  { name: 'patient_id', category: 'Identification', desc: 'Hospital Patient Identifier (e.g. PT-10492)', type: 'String' },
+  { name: 'encounter_id', category: 'Identification', desc: 'Current clinical admission ID (e.g. ENC-88301)', type: 'String' },
+  { name: 'admission_datetime', category: 'Identification', desc: 'Admission date (YYYY-MM-DD)', type: 'Date' },
+  { name: 'patient_name', category: 'Demographics', desc: 'Full legal patient name (e.g. Eleanor Vance)', type: 'String' },
+  { name: 'age_years', category: 'Demographics', desc: 'Age in completed years (e.g. 64)', type: 'Integer' },
+  { name: 'sex', category: 'Demographics', desc: 'Patient sex: Male / Female / Other', type: 'String' },
+  { name: 'pregnancy_status', category: 'Demographics', desc: 'Not applicable / 1st Trimester / 2nd / 3rd', type: 'String' },
+  { name: 'ward', category: 'Location', desc: 'Admitting hospital unit (e.g. ICU Ward 22, Surgical)', type: 'String' },
+  { name: 'bed', category: 'Location', desc: 'Assigned bed number (e.g. Bed 08)', type: 'String' },
+  { name: 'patient_status', category: 'Location', desc: 'Current inpatient status: Admitted / Discharged', type: 'String' },
+  { name: 'primary_diagnosis', category: 'Clinical Diagnosis', desc: 'Primary admitting condition (e.g. Urosepsis)', type: 'String' },
+  { name: 'infection_source', category: 'Clinical Diagnosis', desc: 'Primary site: Urinary Tract / Respiratory / Bloodstream', type: 'String' },
+  { name: 'suspected_pathogen', category: 'Clinical Diagnosis', desc: 'Clinically suspected microorganism', type: 'String' },
+  { name: 'temperature_c', category: 'Vitals & Labs', desc: 'Body temperature in Celsius (e.g. 38.8)', type: 'Float' },
+  { name: 'heart_rate_bpm', category: 'Vitals & Labs', desc: 'Heart rate in beats/min (e.g. 108)', type: 'Integer' },
+  { name: 'systolic_bp_mmhg', category: 'Vitals & Labs', desc: 'Systolic blood pressure (e.g. 110)', type: 'Integer' },
+  { name: 'diastolic_bp_mmhg', category: 'Vitals & Labs', desc: 'Diastolic blood pressure (e.g. 68)', type: 'Integer' },
+  { name: 'spo2_percent', category: 'Vitals & Labs', desc: 'Oxygen saturation percentage (e.g. 94)', type: 'Integer' },
+  { name: 'respiratory_rate_bpm', category: 'Vitals & Labs', desc: 'Breaths per minute (e.g. 22)', type: 'Integer' },
+  { name: 'crp_mg_l', category: 'Vitals & Labs', desc: 'C-reactive protein in mg/L (e.g. 54.2)', type: 'Float' },
+  { name: 'comorbidities', category: 'History & Allergies', desc: 'Semicolon-separated list of chronic diseases', type: 'String' },
+  { name: 'kidney_function', category: 'History & Allergies', desc: 'Normal / Mild impairment / Moderate / Severe / Dialysis', type: 'String' },
+  { name: 'liver_function', category: 'History & Allergies', desc: 'Normal / Mild impairment / Moderate / Severe', type: 'String' },
+  { name: 'drug_allergy', category: 'History & Allergies', desc: 'Documented antimicrobial allergens (e.g. Penicillin)', type: 'String' },
+  { name: 'allergy_severity', category: 'History & Allergies', desc: 'None / Mild / Moderate / Severe Anaphylaxis', type: 'String' },
+  { name: 'prior_antibiotic_exposure_count_90d', category: 'Antimicrobial History', desc: 'Number of antibiotic courses in past 90 days', type: 'Integer' },
+  { name: 'prior_antibiotic_90d', category: 'Antimicrobial History', desc: 'Names of agents taken in past 90 days', type: 'String' },
+  { name: 'prior_antibiotic_days', category: 'Antimicrobial History', desc: 'Cumulative duration of exposure (days)', type: 'Integer' },
+  { name: 'prior_resistant_organism', category: 'Antimicrobial History', desc: 'Prior MDRO colonization / isolation history', type: 'String' },
+  { name: 'ward_endemic_resistance_rate', category: 'Stewardship', desc: 'Unit baseline resistance rate (0.0 to 1.0)', type: 'Float' },
+  { name: 'culture_status', category: 'Microbiology', desc: 'Unavailable / Pending Lab / Preliminary / Completed Final', type: 'String' },
+  { name: 'culture_pathogen', category: 'Microbiology', desc: 'Confirmed microbiology isolate species', type: 'String' }
+];
 
 export const AddPatientModal = ({ isOpen, onClose }) => {
   const { addNewPatient, importPatientsFromDataset, is10kLoaded, loadFull10kDataset } = usePatients();
@@ -54,6 +130,8 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
   const [detectedColumns, setDetectedColumns] = useState([]);
   const [selectedUploadRowIndex, setSelectedUploadRowIndex] = useState(0);
   const [isParsingFile, setIsParsingFile] = useState(false);
+  const [showTemplateColumns, setShowTemplateColumns] = useState(false);
+  const [copiedHeaders, setCopiedHeaders] = useState(false);
 
   // EHR Raw Paste State
   const [rawEhrText, setRawEhrText] = useState('');
@@ -202,6 +280,46 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
       clinical_note_for_llm: row.clinical_note_for_llm || ''
     });
     setActiveTab('manual_form');
+  };
+
+  const handleDownloadCsvTemplate = () => {
+    const csvContent = Papa.unparse([MOCK_TEMPLATE_ROW]);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'resistomex_patient_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadExcelTemplate = () => {
+    const worksheet = XLSX.utils.json_to_sheet([MOCK_TEMPLATE_ROW]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ResistomeX_Template');
+    XLSX.writeFile(workbook, 'resistomex_patient_template.xlsx');
+  };
+
+  const handleDownloadJsonTemplate = () => {
+    const jsonString = JSON.stringify([MOCK_TEMPLATE_ROW], null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'resistomex_patient_template.json');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyHeaders = () => {
+    const headerString = Object.keys(MOCK_TEMPLATE_ROW).join(', ');
+    navigator.clipboard.writeText(headerString);
+    setCopiedHeaders(true);
+    setTimeout(() => setCopiedHeaders(false), 2000);
   };
 
   const handleFileUpload = (e) => {
@@ -527,9 +645,8 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
                       setIsSubmitting(false);
                     }
                   }}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all shadow-xs flex items-center gap-1.5 self-start sm:self-auto shrink-0"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all shadow-xs flex items-center justify-center self-start sm:self-auto shrink-0"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                   <span>{isSubmitting ? 'Loading 10k Records...' : 'Load All 10,000 Records to Registry'}</span>
                 </button>
               </div>
@@ -740,17 +857,15 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
                           type="button"
                           disabled={isSubmitting}
                           onClick={() => handleSelect10kRecord(selected10kRow)}
-                          className="w-full py-2.5 px-4 rounded-lg bg-[#111124] hover:bg-[#26263a] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2"
+                          className="w-full py-2.5 px-4 rounded-lg bg-[#111124] hover:bg-[#26263a] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center text-center"
                         >
-                          <Sparkles className="w-4 h-4 text-amber-400" />
                           <span>Load & Run Instant AMR Assessment</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handlePrefillFormFrom10k(selected10kRow)}
-                          className="w-full py-2 px-3 rounded-lg bg-white hover:bg-[#ededf1] text-[#111124] border border-[#ededf1] text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                          className="w-full py-2 px-3 rounded-lg bg-white hover:bg-[#ededf1] text-[#111124] border border-[#ededf1] text-xs font-semibold transition-all flex items-center justify-center text-center"
                         >
-                          <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
                           <span>Prefill Into Manual Multi-Role Form</span>
                         </button>
                       </div>
@@ -787,6 +902,108 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
                   <span className="text-[10px] text-indigo-700 bg-indigo-100 font-semibold px-2.5 py-0.5 rounded-full">
                     Auto-maps 62 columns to ResistomeX 10k Schema
                   </span>
+                </div>
+              </div>
+
+              {/* Mock Ingestion Templates & Schema Guidelines */}
+              <div className="bg-[#f9f9fd] border border-[#ededf1] rounded-2xl p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-xs font-bold text-[#111124] flex items-center gap-2">
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                      <span>Mock Ingestion Templates (Excel / CSV / JSON)</span>
+                    </h4>
+                    <p className="text-[11px] text-[#5a5b82] mt-0.5">
+                      Download pre-formatted sample templates containing all necessary clinical column names.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadCsvTemplate}
+                      className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-[#ededf1] rounded-lg text-xs font-semibold text-[#111124] flex items-center gap-1.5 shadow-2xs transition-all"
+                      title="Download CSV Template (.csv)"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Download CSV</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadExcelTemplate}
+                      className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-[#ededf1] rounded-lg text-xs font-semibold text-[#111124] flex items-center gap-1.5 shadow-2xs transition-all"
+                      title="Download Excel Template (.xlsx)"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-green-700" />
+                      <span>Download Excel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadJsonTemplate}
+                      className="px-3 py-1.5 bg-white hover:bg-gray-100 border border-[#ededf1] rounded-lg text-xs font-semibold text-[#111124] flex items-center gap-1.5 shadow-2xs transition-all"
+                      title="Download JSON Template (.json)"
+                    >
+                      <FileCode className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Download JSON</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Collapsible Necessary Column Headers Reference */}
+                <div className="pt-2 border-t border-[#ededf1]">
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setShowTemplateColumns(!showTemplateColumns)}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 py-1"
+                    >
+                      <span>{showTemplateColumns ? 'Hide' : 'View'} Necessary Column Names ({MOCK_TEMPLATE_COLUMNS.length} fields)</span>
+                      {showTemplateColumns ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCopyHeaders}
+                      className="text-[11px] font-semibold text-[#5a5b82] hover:text-[#111124] flex items-center gap-1 px-2 py-1 rounded hover:bg-white transition-all"
+                      title="Copy all column headers to clipboard"
+                    >
+                      {copiedHeaders ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-emerald-700 font-bold">Copied Headers!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-[#5a5b82]" />
+                          <span>Copy Column List</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {showTemplateColumns && (
+                    <div className="mt-3 border border-[#ededf1] rounded-xl overflow-hidden bg-white max-h-56 overflow-y-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead className="bg-[#f3f3f7] sticky top-0 text-[11px] font-bold text-[#111124] border-b border-[#ededf1]">
+                          <tr>
+                            <th className="py-2 px-3">Column Name</th>
+                            <th className="py-2 px-3">Category</th>
+                            <th className="py-2 px-3">Type</th>
+                            <th className="py-2 px-3">Clinical Description & Example</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#ededf1]">
+                          {MOCK_TEMPLATE_COLUMNS.map((col, idx) => (
+                            <tr key={idx} className="hover:bg-indigo-50/40">
+                              <td className="py-1.5 px-3 font-mono font-bold text-indigo-700 text-[11px]">{col.name}</td>
+                              <td className="py-1.5 px-3 text-[#5a5b82] text-[11px]">{col.category}</td>
+                              <td className="py-1.5 px-3 text-[10px] font-semibold text-gray-500">{col.type}</td>
+                              <td className="py-1.5 px-3 text-[#111124] text-[11px]">{col.desc}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1253,10 +1470,7 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
               )}
 
               {/* Form Submission Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-[#ededf1]">
-                <div className="text-[11px] text-[#5a5b82]">
-                  * All fields map 1-to-1 with XGBoost & TreeSHAP ML feature pipeline.
-                </div>
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#ededf1]">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1276,10 +1490,7 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
                         <span>Calculating AMR Risk...</span>
                       </>
                     ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 text-amber-400" />
-                        <span>Register & Run AMR Assessment</span>
-                      </>
+                      <span>Register & Run AMR Assessment</span>
                     )}
                   </button>
                 </div>
@@ -1303,10 +1514,7 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
                 />
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <p className="text-[11px] text-[#5a5b82]">
-                  ResistomeX NLP parser will extract vitals, organ function, prior antibiotic exposure, and diagnosis into standard 10k columns.
-                </p>
+              <div className="flex items-center justify-end pt-2">
                 <button
                   type="button"
                   onClick={handleParseEHRText}
