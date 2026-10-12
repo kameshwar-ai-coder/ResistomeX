@@ -439,7 +439,10 @@ export const PatientProvider = ({ children }) => {
           .select()
           .single();
 
-        if (!insertErr && dbPatient) {
+        if (insertErr) {
+          console.warn('Supabase patient insert error:', insertErr.message);
+          setDbError('Database insert warning: ' + insertErr.message);
+        } else if (dbPatient) {
           // Insert Vitals
           await supabase.from('patient_vitals').insert([{
             patient_id: dbPatient.id,
@@ -468,6 +471,7 @@ export const PatientProvider = ({ children }) => {
         }
       } catch (err) {
         console.warn('Supabase insert skipped or failed:', err.message);
+        setDbError('Database sync warning: ' + err.message);
       }
     }
 
@@ -699,12 +703,7 @@ export const PatientProvider = ({ children }) => {
         predicted_risk_level: p?.amrRiskLevel || 'High'
       };
 
-      const res = await fetch('http://localhost:8000/api/culture/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      return await res.json();
+      return await apiService.submitCultureReport(payload);
     } catch (e) {
       console.warn('Backend culture validation loop sync skipped (offline mode):', e);
       return null;

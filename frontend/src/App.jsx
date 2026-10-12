@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PatientProvider } from './context/PatientContext';
@@ -6,23 +6,31 @@ import { PatientProvider } from './context/PatientContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 
-import { LoginPage } from './pages/LoginPage';
-import { SignUpPage } from './pages/SignUpPage';
-import { DoctorDashboardPage } from './pages/DoctorDashboardPage';
-import { PatientsListPage } from './pages/PatientsListPage';
-import { PatientClinicalInfoPage } from './pages/PatientClinicalInfoPage';
-import { AMRRiskAssessmentPage } from './pages/AMRRiskAssessmentPage';
-import { ExplainabilitySHAPPage } from './pages/ExplainabilitySHAPPage';
-import { TreatmentSupportPage } from './pages/TreatmentSupportPage';
-import { DoctorDecisionPage } from './pages/DoctorDecisionPage';
-import { PatientMonitoringPage } from './pages/PatientMonitoringPage';
-import { CultureSensitivityPage } from './pages/CultureSensitivityPage';
-import { NurseDashboardPage } from './pages/NurseDashboardPage';
-import { NursePatientDetailPage } from './pages/NursePatientDetailPage';
-import { AdminDashboardPage } from './pages/AdminDashboardPage';
-import { AntibioticUsagePage } from './pages/AntibioticUsagePage';
-import { AIPerformancePage } from './pages/AIPerformancePage';
-import { UserManagementPage } from './pages/UserManagementPage';
+// Route Code-Splitting: Lazy-loaded pages for minimal initial bundle
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const SignUpPage = lazy(() => import('./pages/SignUpPage').then(m => ({ default: m.SignUpPage })));
+const DoctorDashboardPage = lazy(() => import('./pages/DoctorDashboardPage').then(m => ({ default: m.DoctorDashboardPage })));
+const PatientsListPage = lazy(() => import('./pages/PatientsListPage').then(m => ({ default: m.PatientsListPage })));
+const PatientClinicalInfoPage = lazy(() => import('./pages/PatientClinicalInfoPage').then(m => ({ default: m.PatientClinicalInfoPage })));
+const AMRRiskAssessmentPage = lazy(() => import('./pages/AMRRiskAssessmentPage').then(m => ({ default: m.AMRRiskAssessmentPage })));
+const ExplainabilitySHAPPage = lazy(() => import('./pages/ExplainabilitySHAPPage').then(m => ({ default: m.ExplainabilitySHAPPage })));
+const TreatmentSupportPage = lazy(() => import('./pages/TreatmentSupportPage').then(m => ({ default: m.TreatmentSupportPage })));
+const DoctorDecisionPage = lazy(() => import('./pages/DoctorDecisionPage').then(m => ({ default: m.DoctorDecisionPage })));
+const PatientMonitoringPage = lazy(() => import('./pages/PatientMonitoringPage').then(m => ({ default: m.PatientMonitoringPage })));
+const CultureSensitivityPage = lazy(() => import('./pages/CultureSensitivityPage').then(m => ({ default: m.CultureSensitivityPage })));
+const NurseDashboardPage = lazy(() => import('./pages/NurseDashboardPage').then(m => ({ default: m.NurseDashboardPage })));
+const NursePatientDetailPage = lazy(() => import('./pages/NursePatientDetailPage').then(m => ({ default: m.NursePatientDetailPage })));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
+const AntibioticUsagePage = lazy(() => import('./pages/AntibioticUsagePage').then(m => ({ default: m.AntibioticUsagePage })));
+const AIPerformancePage = lazy(() => import('./pages/AIPerformancePage').then(m => ({ default: m.AIPerformancePage })));
+const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
+
+const PageLoadingSpinner = () => (
+  <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3">
+    <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    <p className="text-xs font-semibold text-gray-500">Loading clinical workspace...</p>
+  </div>
+);
 
 // Public Route Guard (Redirects authenticated users to their dashboard)
 const PublicAuthRoute = ({ children }) => {
@@ -139,36 +147,38 @@ export function App() {
       <PatientProvider>
         <Router>
           <AppLayout>
-            <Routes>
-              {/* Public Auth Routes */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<PublicAuthRoute><LoginPage /></PublicAuthRoute>} />
-              <Route path="/signup" element={<PublicAuthRoute><SignUpPage /></PublicAuthRoute>} />
+            <Suspense fallback={<PageLoadingSpinner />}>
+              <Routes>
+                {/* Public Auth Routes */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<PublicAuthRoute><LoginPage /></PublicAuthRoute>} />
+                <Route path="/signup" element={<PublicAuthRoute><SignUpPage /></PublicAuthRoute>} />
 
-              {/* Doctor Protected Routes (Doctor & Admin access) */}
-              <Route path="/doctor/dashboard" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><DoctorDashboardPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patients" element={<RoleProtectedRoute allowedRoles={['doctor', 'nurse', 'admin']}><PatientsListPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patient/:id/clinical" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><PatientClinicalInfoPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patient/:id/amr-risk" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><AMRRiskAssessmentPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patient/:id/explainability" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><ExplainabilitySHAPPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patient/:id/treatment-support" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><TreatmentSupportPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patient/:id/decision" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><DoctorDecisionPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patient/:id/monitoring" element={<RoleProtectedRoute allowedRoles={['doctor', 'nurse', 'admin']}><PatientMonitoringPage /></RoleProtectedRoute>} />
-              <Route path="/doctor/patient/:id/culture" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><CultureSensitivityPage /></RoleProtectedRoute>} />
+                {/* Doctor Protected Routes (Doctor & Admin access) */}
+                <Route path="/doctor/dashboard" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><DoctorDashboardPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patients" element={<RoleProtectedRoute allowedRoles={['doctor', 'nurse', 'admin']}><PatientsListPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patient/:id/clinical" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><PatientClinicalInfoPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patient/:id/amr-risk" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><AMRRiskAssessmentPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patient/:id/explainability" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><ExplainabilitySHAPPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patient/:id/treatment-support" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><TreatmentSupportPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patient/:id/decision" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><DoctorDecisionPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patient/:id/monitoring" element={<RoleProtectedRoute allowedRoles={['doctor', 'nurse', 'admin']}><PatientMonitoringPage /></RoleProtectedRoute>} />
+                <Route path="/doctor/patient/:id/culture" element={<RoleProtectedRoute allowedRoles={['doctor', 'admin']}><CultureSensitivityPage /></RoleProtectedRoute>} />
 
-              {/* Nurse Protected Routes (Nurse & Admin & Doctor view access) */}
-              <Route path="/nurse/dashboard" element={<RoleProtectedRoute allowedRoles={['nurse', 'admin', 'doctor']}><NurseDashboardPage /></RoleProtectedRoute>} />
-              <Route path="/nurse/patient/:id" element={<RoleProtectedRoute allowedRoles={['nurse', 'admin', 'doctor']}><NursePatientDetailPage /></RoleProtectedRoute>} />
+                {/* Nurse Protected Routes (Nurse & Admin & Doctor view access) */}
+                <Route path="/nurse/dashboard" element={<RoleProtectedRoute allowedRoles={['nurse', 'admin', 'doctor']}><NurseDashboardPage /></RoleProtectedRoute>} />
+                <Route path="/nurse/patient/:id" element={<RoleProtectedRoute allowedRoles={['nurse', 'admin', 'doctor']}><NursePatientDetailPage /></RoleProtectedRoute>} />
 
-              {/* Admin Protected Routes (Strictly Admin only) */}
-              <Route path="/admin/dashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboardPage /></RoleProtectedRoute>} />
-              <Route path="/admin/antibiotics" element={<RoleProtectedRoute allowedRoles={['admin']}><AntibioticUsagePage /></RoleProtectedRoute>} />
-              <Route path="/admin/ai-performance" element={<RoleProtectedRoute allowedRoles={['admin']}><AIPerformancePage /></RoleProtectedRoute>} />
-              <Route path="/admin/users" element={<RoleProtectedRoute allowedRoles={['admin']}><UserManagementPage /></RoleProtectedRoute>} />
+                {/* Admin Protected Routes (Strictly Admin only) */}
+                <Route path="/admin/dashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboardPage /></RoleProtectedRoute>} />
+                <Route path="/admin/antibiotics" element={<RoleProtectedRoute allowedRoles={['admin']}><AntibioticUsagePage /></RoleProtectedRoute>} />
+                <Route path="/admin/ai-performance" element={<RoleProtectedRoute allowedRoles={['admin']}><AIPerformancePage /></RoleProtectedRoute>} />
+                <Route path="/admin/users" element={<RoleProtectedRoute allowedRoles={['admin']}><UserManagementPage /></RoleProtectedRoute>} />
 
-              {/* Fallback Catch-all Route */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+                {/* Fallback Catch-all Route */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </Suspense>
           </AppLayout>
         </Router>
       </PatientProvider>

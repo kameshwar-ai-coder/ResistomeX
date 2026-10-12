@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePatients } from '../context/PatientContext';
@@ -17,7 +17,7 @@ export const Navbar = ({ sidebarWidth = 256, isSidebarCollapsed = false, onToggl
     navigate('/login');
   };
 
-  const highRiskAlerts = (patients || []).filter(p => p.amrRiskLevel === 'High');
+  const highRiskAlerts = useMemo(() => (patients || []).filter(p => p.amrRiskLevel === 'High'), [patients]);
   const currentUser = user || { name: 'Medical Staff', title: 'Attending Physician', avatar: 'RX' };
 
   return (

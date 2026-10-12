@@ -256,6 +256,23 @@ export const apiService = {
     return { success: false };
   },
 
+  // Submit Culture Report (Microbiology Active Learning loop)
+  async submitCultureReport(payload) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/culture/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('[ResistomeX API] Culture validation sync skipped:', e.message);
+    }
+    return null;
+  },
+
   // Get Single Dataset Record
   async getDatasetRecord(recordId) {
     try {
