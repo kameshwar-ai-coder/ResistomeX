@@ -14,7 +14,6 @@ export const PatientsListPage = () => {
   const [infectionFilter, setInfectionFilter] = useState('');
   const [cohortFilter, setCohortFilter] = useState('All');
   const [statusTab, setStatusTab] = useState('Active'); // 'Active' | 'Discharged' | 'All'
-  const [activeViewMode, setActiveViewMode] = useState('grid'); // 'grid' (Bedside Cards) | 'table' (Acuity Table)
 
   // Sync tab with location search if navigated via /doctor/patients?tab=history
   useEffect(() => {
@@ -40,7 +39,7 @@ export const PatientsListPage = () => {
     );
   }
 
-  if (dbError) {
+  if (dbError && (!patients || patients.length === 0)) {
     return (
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
         <div className="p-8 text-center bg-red-50 text-red-900 rounded-xl border border-red-200 space-y-2">
@@ -209,36 +208,6 @@ export const PatientsListPage = () => {
             </span>
           </button>
         </div>
-
-        {/* View Switcher for Active Inpatients (Cards vs Table) */}
-        {statusTab === 'Active' && (
-          <div className="flex items-center gap-1 bg-[#f3f3f7] p-1 rounded-lg border border-[#ededf1]">
-            <button
-              onClick={() => setActiveViewMode('grid')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
-                activeViewMode === 'grid'
-                  ? 'bg-white text-[#111124] shadow-xs'
-                  : 'text-[#5a5b82] hover:text-[#111124]'
-              }`}
-              title="Bedside Triage Cards View"
-            >
-              <span className="material-symbols-outlined text-[16px]">grid_view</span>
-              <span>Triage Cards</span>
-            </button>
-            <button
-              onClick={() => setActiveViewMode('table')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
-                activeViewMode === 'table'
-                  ? 'bg-white text-[#111124] shadow-xs'
-                  : 'text-[#5a5b82] hover:text-[#111124]'
-              }`}
-              title="Acuity Table View"
-            >
-              <span className="material-symbols-outlined text-[16px]">table_rows</span>
-              <span>Acuity Table</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* DISTINCT HEADER METRICS STRIP: ACTIVE VS DISCHARGED */}
@@ -414,7 +383,7 @@ export const PatientsListPage = () => {
               <p className="text-base font-bold text-[#111124]">No active inpatients found.</p>
               <p className="text-xs">Adjust your search query or AMR risk filters.</p>
             </div>
-          ) : activeViewMode === 'grid' ? (
+          ) : (
             /* Bedside Triage Cards (High-Efficiency Grid) */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map(patient => {
@@ -535,96 +504,6 @@ export const PatientsListPage = () => {
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            /* Acuity Table View for Active Inpatients */
-            <div className="bg-white rounded-xl shadow-xs overflow-hidden border border-[#ededf1]">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs min-w-[950px]">
-                  <thead>
-                    <tr className="bg-[#f3f3f7] text-[#5a5b82] uppercase text-[10px] tracking-wider font-semibold border-b border-[#ededf1]">
-                      <th className="py-3 px-4">Bed &amp; Ward</th>
-                      <th className="py-3 px-4">Patient &amp; MRN</th>
-                      <th className="py-3 px-4">Acute Vitals &amp; Sepsis Alert</th>
-                      <th className="py-3 px-4">Infection &amp; Suspected Pathogen</th>
-                      <th className="py-3 px-4">AMR Risk Stratum</th>
-                      <th className="py-3 px-4">Current Regimen</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#ededf1]">
-                    {filtered.map(patient => (
-                      <tr key={patient.id} className="hover:bg-[#f3f3f7]/50 transition-colors">
-                        <td className="py-3 px-4">
-                          <div className="font-mono font-bold text-[#111124]">{patient.bed}</div>
-                          <div className="text-[11px] text-[#5a5b82]">{patient.ward}</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <NavLink
-                            to={role === 'nurse' ? `/nurse/patient/${patient.id}` : `/doctor/patient/${patient.id}/clinical`}
-                            className="font-bold text-[#111124] hover:underline block"
-                          >
-                            {patient.name}
-                          </NavLink>
-                          <div className="text-[11px] text-[#5a5b82]">
-                            {patient.age}y / {patient.gender} &middot; <span className="font-mono">{patient.mrn}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              patient.vitals?.tempNum >= 38.5 ? 'bg-red-100 text-red-900' : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {patient.vitals?.tempNum ? `${patient.vitals.tempNum}°C` : patient.vitals?.temp || '--'}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              patient.vitals?.rrNum >= 24 ? 'bg-red-100 text-red-900' : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              RR {patient.vitals?.rrNum || patient.vitals?.rr || '--'}
-                            </span>
-                            <span className="text-[11px] text-[#5a5b82]">
-                              BP {patient.vitals?.bpSys ? `${patient.vitals.bpSys}/${patient.vitals.bpDia}` : patient.vitals?.bp || '--'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-[#111124]">{patient.infectionSource}</div>
-                          <div className="text-[11px] text-[#ba1a1a] font-medium">{patient.suspectedPathogen}</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            patient.amrRiskLevel === 'High' ? 'bg-[#ffdad6] text-[#93000a]' :
-                            patient.amrRiskLevel === 'Medium' ? 'bg-amber-100 text-amber-900' :
-                            'bg-emerald-100 text-emerald-900'
-                          }`}>
-                            {patient.amrRiskLevel} {patient.amrRiskScore}%
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 font-medium text-[#111124] max-w-xs truncate">
-                          {patient.doctorDecision?.currentRegimen || patient.rawRecord10k?.current_empiric_regimen || patient.aiPrediction?.firstLineOption || 'Pending'}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <NavLink
-                              to={`/doctor/patient/${patient.id}/explainability`}
-                              className="px-2.5 py-1 bg-[#f3f3f7] hover:bg-[#ededf1] text-[#111124] font-semibold rounded text-[11px]"
-                              title="Why This Prediction?"
-                            >
-                              SHAP
-                            </NavLink>
-                            <NavLink
-                              to={`/doctor/patient/${patient.id}/amr-risk`}
-                              className="px-2.5 py-1 bg-[#111124] hover:bg-[#26263a] text-white font-semibold rounded text-[11px]"
-                            >
-                              AMR Risk
-                            </NavLink>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
         </div>

@@ -15,6 +15,18 @@ from .validation import LLMExtractionSchema, TreatmentRecommendationSchema, Cand
 
 logger = logging.getLogger(__name__)
 
+# Pre-compiled regex patterns for clinical note extraction
+RE_TEMP = re.compile(r"T\s*([0-9]+\.?[0-9]*)\s*C?", re.IGNORECASE)
+RE_HR = re.compile(r"HR\s*([0-9]+)", re.IGNORECASE)
+RE_BP = re.compile(r"BP\s*([0-9]+)\s*/\s*([0-9]+)", re.IGNORECASE)
+RE_SPO2 = re.compile(r"SpO2\s*([0-9]+)\s*%?", re.IGNORECASE)
+RE_RR = re.compile(r"RR\s*([0-9]+)", re.IGNORECASE)
+RE_CRP = re.compile(r"CRP\s*([0-9]+\.?[0-9]*)\s*(?:mg/L)?", re.IGNORECASE)
+RE_ABX_COUNT = re.compile(r"prior antibiotic exposure in 90d\s*([0-9]+)", re.IGNORECASE)
+RE_PREV_RES = re.compile(r"previous resistant organism\s*([^.]+)", re.IGNORECASE)
+RE_ALLERGY = re.compile(r"allergy\s*([^;.]+)", re.IGNORECASE)
+RE_HISTORY = re.compile(r"History:\s*([^;.]+)", re.IGNORECASE)
+
 # =========================================================================
 # 1. CLINICAL NOTE EXTRACTOR
 # =========================================================================
@@ -31,18 +43,18 @@ class ClinicalNoteExtractor:
         clean_text = self._sanitize_input(text)
 
         # 1. Vitals
-        temp_match = re.search(r"T\s*([0-9]+\.?[0-9]*)\s*C?", clean_text, re.IGNORECASE)
-        hr_match = re.search(r"HR\s*([0-9]+)", clean_text, re.IGNORECASE)
-        bp_match = re.search(r"BP\s*([0-9]+)\s*/\s*([0-9]+)", clean_text, re.IGNORECASE)
-        spo2_match = re.search(r"SpO2\s*([0-9]+)\s*%?", clean_text, re.IGNORECASE)
-        rr_match = re.search(r"RR\s*([0-9]+)", clean_text, re.IGNORECASE)
-        crp_match = re.search(r"CRP\s*([0-9]+\.?[0-9]*)\s*(?:mg/L)?", clean_text, re.IGNORECASE)
+        temp_match = RE_TEMP.search(clean_text)
+        hr_match = RE_HR.search(clean_text)
+        bp_match = RE_BP.search(clean_text)
+        spo2_match = RE_SPO2.search(clean_text)
+        rr_match = RE_RR.search(clean_text)
+        crp_match = RE_CRP.search(clean_text)
 
         # 2. History & Exposures
-        abx_count_match = re.search(r"prior antibiotic exposure in 90d\s*([0-9]+)", clean_text, re.IGNORECASE)
-        prev_res_match = re.search(r"previous resistant organism\s*([^.]+)", clean_text, re.IGNORECASE)
-        allergy_match = re.search(r"allergy\s*([^;.]+)", clean_text, re.IGNORECASE)
-        history_match = re.search(r"History:\s*([^;.]+)", clean_text, re.IGNORECASE)
+        abx_count_match = RE_ABX_COUNT.search(clean_text)
+        prev_res_match = RE_PREV_RES.search(clean_text)
+        allergy_match = RE_ALLERGY.search(clean_text)
+        history_match = RE_HISTORY.search(clean_text)
 
         temp = float(temp_match.group(1)) if temp_match else None
         hr = int(hr_match.group(1)) if hr_match else None

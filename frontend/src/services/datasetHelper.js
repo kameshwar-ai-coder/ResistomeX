@@ -268,3 +268,22 @@ export const map10kRowToPatient = (row, index = 0) => {
     ]
   };
 };
+
+let _cachedSamples = null;
+
+export async function fetchDatasetSamples() {
+  if (_cachedSamples && _cachedSamples.length > 0) {
+    return _cachedSamples;
+  }
+  try {
+    const res = await fetch('/data/datasetSamples.json');
+    if (res.ok) {
+      _cachedSamples = await res.json();
+      return _cachedSamples;
+    }
+  } catch (err) {
+    console.warn('[datasetHelper] Error fetching /data/datasetSamples.json:', err);
+  }
+  return [];
+}
+

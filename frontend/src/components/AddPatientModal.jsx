@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePatients } from '../context/PatientContext';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
-import { map10kRowToPatient, DATASET_10K_COLUMNS } from '../services/datasetHelper';
+import { map10kRowToPatient, DATASET_10K_COLUMNS, fetchDatasetSamples } from '../services/datasetHelper';
 import initialSamples from '../data/datasetSamples.json';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
@@ -196,7 +196,11 @@ export const AddPatientModal = ({ isOpen, onClose }) => {
         }
       }
 
-      let filtered = initialSamples;
+      let sourceSamples = initialSamples;
+      const remote = await fetchDatasetSamples();
+      if (remote && remote.length > 0) sourceSamples = remote;
+
+      let filtered = sourceSamples;
       if (riskFilter !== 'All') {
         filtered = filtered.filter(r => (r.amr_risk_category || '').toLowerCase() === riskFilter.toLowerCase());
       }

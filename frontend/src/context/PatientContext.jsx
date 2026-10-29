@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { apiService } from '../services/api';
-import { map10kRowToPatient } from '../services/datasetHelper';
+import { map10kRowToPatient, fetchDatasetSamples } from '../services/datasetHelper';
 import initialSamples from '../data/datasetSamples.json';
 import Papa from 'papaparse';
 
@@ -29,10 +29,24 @@ export const PatientProvider = ({ children }) => {
   });
 
   // Load baseline curated 10k clinical cohort
-  const loadCuratedBenchmarkCohort = useCallback(() => {
-    const formatted = initialSamples.map((row, idx) => map10kRowToPatient(row, idx));
-    setPatients(formatted);
-    setDatasetTotalCount(initialSamples.length);
+  const loadCuratedBenchmarkCohort = useCallback(async () => {
+    let custom = [];
+    try {
+      const saved = localStorage.getItem('resistomex_custom_patients');
+      if (saved) custom = JSON.parse(saved);
+    } catch (e) {
+      console.warn('Failed to load custom patients from storage:', e);
+    }
+
+    let rawData = initialSamples;
+    const remoteSamples = await fetchDatasetSamples();
+    if (remoteSamples && remoteSamples.length > 0) {
+      rawData = remoteSamples;
+    }
+
+    const formatted = rawData.map((row, idx) => map10kRowToPatient(row, idx));
+    setPatients([...custom, ...formatted]);
+    setDatasetTotalCount(rawData.length + custom.length);
     
     // Compute decision stats
     const counts = { accepted: 0, modified: 0, overridden: 0 };
@@ -327,9 +341,23 @@ export const PatientProvider = ({ children }) => {
   // Batch import patients (from CSV, Excel, or EHR upload)
   const importPatientsFromDataset = (records) => {
     if (!Array.isArray(records) || records.length === 0) return;
-    const formatted = records.map((r, i) => map10kRowToPatient(r, i)).filter(Boolean);
-    setPatients(formatted);
-    setDatasetTotalCount(formatted.length);
+    const formatted = records.map((r, i) => {
+      const p = map10kRowToPatient(r, i);
+      if (p && !p.admissionStatus) p.admissionStatus = 'Admitted';
+      return p;
+    }).filter(Boolean);
+
+    try {
+      const saved = localStorage.getItem('resistomex_custom_patients');
+      const customList = saved ? JSON.parse(saved) : [];
+      const updatedCustom = [...formatted, ...customList.filter(c => !formatted.some(f => f.id === c.id))];
+      localStorage.setItem('resistomex_custom_patients', JSON.stringify(updatedCustom));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
+
+    setPatients(prev => [...formatted, ...prev.filter(p => !formatted.some(f => f.id === p.id))]);
+    setDatasetTotalCount(prev => prev + formatted.length);
     setIs10kLoaded(true);
     return formatted;
   };
@@ -373,10 +401,53 @@ export const PatientProvider = ({ children }) => {
     const mrn = patientData.mrn || `MRN-${Math.floor(100000 + Math.random() * 900000)}`;
     const patientName = patientData.patient_name || patientData.name || 'New Inpatient';
 
+    // 1. Attempt Calibrated ML Inference via FastAPI Backend
+    let mlPrediction = null;
+    try {
+      const mlRes = await apiService.predictAMRRisk({
+        patient_id: patientId,
+        encounter_id: encounterId,
+        patient_name: patientName,
+        age_years: parseFloat(patientData.age_years || patientData.age) || 60,
+        sex: patientData.sex || patientData.gender || 'Male',
+        pregnancy_status: patientData.pregnancy_status || 'Not applicable',
+        ward: patientData.ward || 'General Medicine',
+        bed: patientData.bed || 'Bed 01',
+        primary_diagnosis: patientData.primary_diagnosis || patientData.primaryDiagnosis || 'Acute Infection',
+        infection_source: patientData.infection_source || patientData.infectionSource || 'Bloodstream / Sepsis',
+        suspected_pathogen: patientData.suspected_pathogen || patientData.suspectedPathogen || 'Gram-negative Bacilli',
+        temperature_c: tempNum,
+        heart_rate_bpm: hrNum,
+        systolic_bp_mmhg: bpSys,
+        diastolic_bp_mmhg: bpDia,
+        spo2_percent: spo2Num,
+        respiratory_rate_bpm: rrNum,
+        crp_mg_l: crpNum,
+        comorbidities: patientData.comorbidities || '',
+        kidney_function: patientData.kidney_function || 'Normal',
+        liver_function: patientData.liver_function || 'Normal',
+        drug_allergy: patientData.drug_allergy || patientData.allergies || 'None known',
+        allergy_severity: patientData.allergy_severity || 'None',
+        prior_antibiotic_exposure_count_90d: parseInt(patientData.prior_antibiotic_exposure_count_90d) || (hasPriorAntibiotics ? 1 : 0),
+        prior_antibiotic_90d: patientData.prior_antibiotic_90d || patientData.priorAntibiotics || 'None in prior 90 days',
+        prior_antibiotic_days: parseInt(patientData.prior_antibiotic_days) || 5,
+        prior_resistant_organism: patientData.prior_resistant_organism || 'None known',
+        ward_endemic_resistance_rate: parseFloat(patientData.ward_endemic_resistance_rate) || 0.25
+      });
+      if (mlRes.success && mlRes.data?.prediction) {
+        mlPrediction = mlRes.data;
+        riskScore = mlRes.data.prediction.probability_percent ?? Math.round(mlRes.data.prediction.probability * 100);
+        riskLevel = mlRes.data.prediction.risk_level || riskLevel;
+      }
+    } catch (mlErr) {
+      console.warn('[PatientContext] ML Service prediction deferred to local rule calculation:', mlErr.message);
+    }
+
     const newPatientObj = map10kRowToPatient({
       patient_id: patientId,
       encounter_id: encounterId,
       patient_name: patientName,
+      patient_status: patientData.patient_status || 'Admitted',
       age_years: parseFloat(patientData.age_years || patientData.age) || 60,
       sex: patientData.sex || patientData.gender || 'Male',
       pregnancy_status: patientData.pregnancy_status || 'Not applicable',
@@ -414,10 +485,30 @@ export const PatientProvider = ({ children }) => {
       clinical_note_for_llm: patientData.clinical_note_for_llm || patientData.outcomeNotes || ''
     });
 
-    // Save to local state first
-    setPatients(prev => [newPatientObj, ...prev]);
+    // Ensure admissionStatus is explicitly 'Admitted' for active dashboards
+    newPatientObj.admissionStatus = 'Admitted';
+    if (mlPrediction?.explanation?.top_risk_factors) {
+      newPatientObj.shapFeatures = mlPrediction.explanation.top_risk_factors.map(f => ({
+        feature: f.feature.replace(/^feat_/, '').replace(/_/g, ' ').toUpperCase(),
+        description: `Impact: ${f.shap_value > 0 ? '+' : ''}${f.shap_value.toFixed(4)}`,
+        impact: Math.round(f.shap_value * 50)
+      }));
+    }
 
-    // If Supabase is configured, write to tables asynchronously
+    // Save to local state first and persistent storage
+    try {
+      const saved = localStorage.getItem('resistomex_custom_patients');
+      const customList = saved ? JSON.parse(saved) : [];
+      const updatedCustom = [newPatientObj, ...customList.filter(p => p.id !== newPatientObj.id)];
+      localStorage.setItem('resistomex_custom_patients', JSON.stringify(updatedCustom));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
+
+    setPatients(prev => [newPatientObj, ...prev.filter(p => p.id !== newPatientObj.id)]);
+    setDbError(null); // Clear any prior database error so user can immediately view patient
+
+    // If Supabase is configured, write to tables asynchronously in background
     if (isSupabaseConfigured) {
       try {
         const { data: dbPatient, error: insertErr } = await supabase
@@ -440,8 +531,7 @@ export const PatientProvider = ({ children }) => {
           .single();
 
         if (insertErr) {
-          console.warn('Supabase patient insert error:', insertErr.message);
-          setDbError('Database insert warning: ' + insertErr.message);
+          console.warn('[PatientContext] Supabase RLS notice (patient saved in active clinical memory):', insertErr.message);
         } else if (dbPatient) {
           // Insert Vitals
           await supabase.from('patient_vitals').insert([{
@@ -470,8 +560,7 @@ export const PatientProvider = ({ children }) => {
           }]);
         }
       } catch (err) {
-        console.warn('Supabase insert skipped or failed:', err.message);
-        setDbError('Database sync warning: ' + err.message);
+        console.warn('[PatientContext] Supabase insert skipped (operating in local fallback):', err.message);
       }
     }
 

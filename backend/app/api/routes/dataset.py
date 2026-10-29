@@ -138,14 +138,38 @@ def get_single_record(record_id: str):
     return match.iloc[0].to_dict()
 
 
+MAX_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB max
+
+
 @router.post("/upload")
 async def upload_dataset_file(file: UploadFile = File(...)):
     """
     Parse uploaded CSV or Excel (.xlsx, .xls) file into standardized 10k-format records.
-    Normalizes column headers and converts types.
+    Normalizes column headers and converts types. Enforces 25MB max size.
     """
     filename = file.filename or "uploaded_file.csv"
-    contents = await file.read()
+
+    # Pre-check size attribute if provided by ASGI server
+    if getattr(file, "size", None) and file.size > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File exceeds maximum allowed upload size of {MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)}MB."
+        )
+
+    # Stream read with size capping to protect process memory
+    chunk_size = 1024 * 1024
+    byte_buffer = bytearray()
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        byte_buffer.extend(chunk)
+        if len(byte_buffer) > MAX_UPLOAD_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File exceeds maximum allowed upload size of {MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)}MB."
+            )
+    contents = bytes(byte_buffer)
 
     try:
         if filename.endswith(".xlsx") or filename.endswith(".xls"):

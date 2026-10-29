@@ -16,15 +16,15 @@ export const Sidebar = ({
   // Doctor top-level sidebar items
   const doctorNav = [
     { name: 'Dashboard', path: '/doctor/dashboard', icon: 'dashboard' },
-    { name: 'Patients', path: '/doctor/patients', icon: 'personal_injury' },
-    { name: 'Patient History', path: '/doctor/patients?tab=history', icon: 'history_edu' }
+    { name: 'Bedside Patients', path: '/doctor/patients', icon: 'personal_injury' },
+    { name: 'Microbiology & Cultures', path: '/doctor/patient/PX-100000/culture', icon: 'biotech' }
   ];
 
   // Nurse top-level sidebar items
   const nurseNav = [
     { name: 'Nurse Dashboard', path: '/nurse/dashboard', icon: 'medical_services' },
     { name: 'Patient Directory', path: '/doctor/patients', icon: 'personal_injury' },
-    { name: 'Patient History', path: '/doctor/patients?tab=history', icon: 'history_edu' }
+    { name: 'Culture Lab Reports', path: '/doctor/patient/PX-100000/culture', icon: 'biotech' }
   ];
 
   // Admin top-level sidebar items

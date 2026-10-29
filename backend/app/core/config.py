@@ -16,10 +16,15 @@ class Settings(BaseModel):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
+        "http://127.0.0.1:3000",
         "http://localhost:8000",
-        "*"
+        "http://127.0.0.1:8000",
     ]
     
+    # Security & Auth Settings
+    REQUIRE_AUTH: bool = Field(default_factory=lambda: os.getenv("REQUIRE_AUTH", "false").lower() in ("true", "1"))
+    API_KEY: Optional[str] = Field(default_factory=lambda: os.getenv("API_KEY", None))
+
     # Model Artifact Paths
     MODELS_DIR: str = Field(default_factory=lambda: os.getenv("MODELS_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../backend/models"))))
     CONFIG_DIR: str = Field(default_factory=lambda: os.getenv("CONFIG_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../backend/config"))))

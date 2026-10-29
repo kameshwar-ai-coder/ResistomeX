@@ -70,8 +70,26 @@ export const Navbar = ({ sidebarWidth = 256, isSidebarCollapsed = false, onToggl
               <div className="space-y-2 text-xs max-h-60 overflow-y-auto">
                 {highRiskAlerts.length > 0 ? (
                   highRiskAlerts.map(p => (
-                    <div key={p.id} className="p-2 bg-red-50 border border-red-100 rounded">
-                      <span className="font-bold text-[#ba1a1a]">{p.name} ({p.bed})</span>
+                    <div
+                      key={p.id}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        const targetPath = role === 'nurse'
+                          ? `/nurse/patient/${p.id}`
+                          : `/doctor/patient/${p.id}/amr-risk`;
+                        navigate(targetPath);
+                      }}
+                      className="p-2.5 bg-red-50 hover:bg-red-100/80 border border-red-200 rounded-lg cursor-pointer transition-all group"
+                      title="Click to open AMR Risk Stratification for this patient"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#ba1a1a] group-hover:underline">
+                          {p.name} ({p.bed})
+                        </span>
+                        <span className="material-symbols-outlined text-[14px] text-red-600 group-hover:translate-x-0.5 transition-transform">
+                          arrow_forward
+                        </span>
+                      </div>
                       <p className="text-[11px] text-gray-700 mt-0.5">
                         High AMR Risk ({p.amrRiskScore}%). Requires empiric stewardship review.
                       </p>

@@ -9,10 +9,14 @@ frontend/dist-ssr/
 .env
 .env.*
 !.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # Python
 __pycache__/
 backend/**/__pycache__/
+ml-research/**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -46,3 +50,16 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+*.tmp
+*.bak
+screenshots/
+
+# Transient analysis & design thinking artifacts
+empathy_candidates/
+extracted_assets/
+slides/
+template_pages/
+build_design_thinking_report.py
+reference_doc_text.txt
+template_pdf_text.txt
+yahya_pdf_text.txt

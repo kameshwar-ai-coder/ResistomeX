@@ -3,6 +3,21 @@ import { supabase, isSupabaseConfigured } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+async function getAuthHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  try {
+    if (isSupabaseConfigured) {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${data.session.access_token}`;
+      }
+    }
+  } catch (e) {
+    // Non-blocking
+  }
+  return headers;
+}
+
 export const apiService = {
   // Check backend Supabase connection status
   async checkDatabaseConnection() {
@@ -52,9 +67,10 @@ export const apiService = {
   // Predict AMR Risk via FastAPI ML inference engine
   async predictAMRRisk(patientData) {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/api/amr/predict`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(patientData)
       });
       if (res.ok) {
@@ -70,9 +86,10 @@ export const apiService = {
   // Explain AMR Risk via TreeSHAP feature attribution
   async explainAMRRisk(explainRequest) {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/api/amr/explain`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(explainRequest)
       });
       if (res.ok) {
@@ -88,9 +105,10 @@ export const apiService = {
   // Get Rule-Constrained Empiric Treatment Support
   async getTreatmentSupport(supportData) {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/api/treatment/support`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(supportData)
       });
       if (res.ok) {
@@ -106,9 +124,10 @@ export const apiService = {
   // Extract features from unstructured clinical notes
   async extractClinicalNote(rawNote) {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/api/llm/extract`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ raw_clinical_note: rawNote })
       });
       if (res.ok) {
@@ -124,7 +143,8 @@ export const apiService = {
   // Fetch Model Metrics & Evaluation Data
   async getModelMetrics() {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/model/metrics`, { method: 'GET' });
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/model/metrics`, { method: 'GET', headers });
       if (res.ok) {
         const result = await res.json();
         return { success: true, data: result };
@@ -146,13 +166,16 @@ export const apiService = {
     return { success: false };
   },
 
-  // Save Doctor Decision (records to backend audit & Supabase)
+  // Save Doctor Decision (synchronized to backend audit & Supabase)
   async saveDoctorDecision(patientId, decisionData) {
+    const headers = await getAuthHeaders();
+    let backendData = null;
+
     // 1. Send to FastAPI backend decision service
     try {
-      fetch(`${API_BASE_URL}/api/decisions`, {
+      const res = await fetch(`${API_BASE_URL}/api/decisions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           patient_id: patientId,
           decision_type: decisionData.decisionType || 'ACCEPT',
@@ -160,14 +183,17 @@ export const apiService = {
           rationale: decisionData.rationale,
           decided_by: decisionData.decidedBy || 'attending_physician'
         })
-      }).catch(err => console.warn('[ResistomeX API] Backend decision audit sync skipped:', err.message));
-    } catch (e) {
-      // Non-blocking
+      });
+      if (res.ok) {
+        backendData = await res.json();
+      }
+    } catch (err) {
+      console.warn('[ResistomeX API] Backend decision audit sync failed:', err.message);
     }
 
     // 2. Save directly to Supabase if configured
     if (!isSupabaseConfigured) {
-      return { success: true, data: { patient_id: patientId, localOnly: true } };
+      return { success: true, data: backendData || { patient_id: patientId, localOnly: true } };
     }
 
     try {
@@ -183,9 +209,12 @@ export const apiService = {
       }]).select().single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: { ...data, backend_audit: backendData } };
     } catch (err) {
       console.error('[ResistomeX API] Failed to record decision in Supabase:', err.message);
+      if (backendData) {
+        return { success: true, data: backendData, warning: 'Supabase sync failed; preserved in backend audit.' };
+      }
       return { success: false, error: err.message };
     }
   },

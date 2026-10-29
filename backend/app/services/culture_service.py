@@ -11,12 +11,16 @@ from app.schemas.culture import (
     CultureLearningStatsResponse
 )
 
+import threading
+import tempfile
+
 logger = logging.getLogger(__name__)
 
 CULTURE_MEMORY_FILE = os.path.join(
     settings.BASE_DIR if hasattr(settings, 'BASE_DIR') else os.getcwd(), 
     "validated_culture_ground_truth.json"
 )
+_culture_lock = threading.Lock()
 
 
 class CultureService:
@@ -26,23 +30,33 @@ class CultureService:
 
     @classmethod
     def _load_memory(cls):
-        if cls._cultures_memory:
-            return
-        if os.path.exists(CULTURE_MEMORY_FILE):
-            try:
-                with open(CULTURE_MEMORY_FILE, "r", encoding="utf-8") as f:
-                    cls._cultures_memory = json.load(f)
-            except Exception as e:
-                logger.warning(f"Could not load culture memory: {e}")
-                cls._cultures_memory = []
+        with _culture_lock:
+            if cls._cultures_memory:
+                return
+            if os.path.exists(CULTURE_MEMORY_FILE):
+                try:
+                    with open(CULTURE_MEMORY_FILE, "r", encoding="utf-8") as f:
+                        cls._cultures_memory = json.load(f)
+                except Exception as e:
+                    logger.warning(f"Could not load culture memory: {e}")
+                    cls._cultures_memory = []
 
     @classmethod
     def _save_memory(cls):
-        try:
-            with open(CULTURE_MEMORY_FILE, "w", encoding="utf-8") as f:
-                json.dump(cls._cultures_memory, f, indent=2)
-        except Exception as e:
-            logger.warning(f"Could not save culture memory: {e}")
+        with _culture_lock:
+            try:
+                target_dir = os.path.dirname(os.path.abspath(CULTURE_MEMORY_FILE))
+                with tempfile.NamedTemporaryFile("w", dir=target_dir, delete=False, encoding="utf-8") as tf:
+                    json.dump(cls._cultures_memory, tf, indent=2)
+                    temp_name = tf.name
+                os.replace(temp_name, CULTURE_MEMORY_FILE)
+            except Exception as e:
+                logger.warning(f"Could not save culture memory: {e}")
+                if 'temp_name' in locals() and os.path.exists(temp_name):
+                    try:
+                        os.remove(temp_name)
+                    except OSError:
+                        pass
 
     @classmethod
     def process_culture_report(cls, report_in: CultureReportCreate) -> CultureValidationResponse:

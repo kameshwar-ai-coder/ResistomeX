@@ -36,7 +36,7 @@ export const PatientClinicalInfoPage = () => {
     );
   }
 
-  if (dbError) {
+  if (dbError && !patient) {
     return (
       <div className="flex flex-col w-full space-y-6">
         <PatientHeader />
